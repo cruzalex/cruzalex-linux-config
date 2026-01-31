@@ -93,11 +93,17 @@ bluez-tools
 chromium
 
 # ═══════════════════════════════════════════════════════════════
-# NOTE: These are installed via COPR or cargo:
-# - lazygit (COPR: atim/lazygit)
-# - lazydocker (cargo)
-# - walker (cargo or build from source)
-# - swayosd (COPR or build from source)
-# - hyprsunset (build from source)
-# - satty (cargo)
+# File Managers & Utils
+# ═══════════════════════════════════════════════════════════════
+yazi
+gitui
+
+# ═══════════════════════════════════════════════════════════════
+# NOTE: These require COPR repos or manual install:
+# - lazygit: sudo dnf copr enable atim/lazygit && sudo dnf install lazygit
+# - lazydocker: go install github.com/jesseduffield/lazydocker@latest
+# - walker: build from source or use rofi/wofi alternative
+# - swayosd: sudo dnf copr enable erikreider/SwayNotificationCenter
+# - hyprsunset: build from source
+# - satty: cargo install satty (needs deps)
 # ═══════════════════════════════════════════════════════════════

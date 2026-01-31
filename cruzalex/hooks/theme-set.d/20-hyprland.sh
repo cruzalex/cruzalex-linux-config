@@ -22,9 +22,9 @@ apply_colors() {
         return
     fi
 
-    # Parse accent color for borders
-    local accent=$(grep '^accent' "$colors_file" | cut -d'"' -f2 | tr -d '#')
-    local background=$(grep '^background' "$colors_file" | cut -d'"' -f2 | tr -d '#')
+    # Parse accent color for borders (use = to exact match, head -1 for first match)
+    local accent=$(grep '^accent *=' "$colors_file" | head -1 | cut -d'"' -f2 | tr -d '#')
+    local background=$(grep '^background *=' "$colors_file" | head -1 | cut -d'"' -f2 | tr -d '#')
 
     if [ -n "$accent" ]; then
         # Set active border color
@@ -32,8 +32,8 @@ apply_colors() {
     fi
 
     if [ -n "$background" ]; then
-        # Set inactive border color (dimmed)
-        hyprctl keyword general:col.inactive_border "rgb(${background}88)" 2>/dev/null || true
+        # Set inactive border color (dimmed) - use rgba() for alpha support
+        hyprctl keyword general:col.inactive_border "rgba(${background}88)" 2>/dev/null || true
     fi
 }
 

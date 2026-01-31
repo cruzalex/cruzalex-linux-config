@@ -1,5 +1,6 @@
 # cruzAlex Cargo Package List
 # Rust-based TUI applications
+# Note: Some tools are better installed from system repos (see fedora.txt/arch.txt)
 
 # Shell prompt
 starship
@@ -7,22 +8,8 @@ starship
 # Modern ls replacement
 eza
 
-# File manager (TUI)
-yazi-fm
-yazi-cli
-
-# Git TUI
-gitui
-lazygit
-
-# Docker TUI
-lazydocker
-
 # System monitor (alternative)
 bottom
-
-# Spotify TUI player
-spotify_player
 
 # Network tools
 gping
@@ -31,11 +18,16 @@ bandwhich
 # Process viewer
 procs
 
-# Disk usage
-dust
-
 # HTTP client
 xh
 
-# Screenshot editor
-satty
+# ═══════════════════════════════════════════════════════════════
+# The following are commented out - install from repos instead:
+# ═══════════════════════════════════════════════════════════════
+# yazi-fm yazi-cli   - Install: sudo dnf install yazi (Fedora) or yay -S yazi (Arch AUR)
+# lazygit            - Install: sudo dnf copr enable atim/lazygit && sudo dnf install lazygit
+# gitui              - Install: sudo dnf install gitui (if available) or build from source
+# lazydocker         - Install: go install github.com/jesseduffield/lazydocker@latest
+# spotify_player     - Install: needs librespot-devel, build manually
+# dust               - Install: sudo dnf install dust (if available)
+# satty              - Install: sudo dnf install satty (if available)
