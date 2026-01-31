@@ -11,8 +11,12 @@ eza
 yazi-fm
 yazi-cli
 
-# Git TUI (alternative)
+# Git TUI
 gitui
+lazygit
+
+# Docker TUI
+lazydocker
 
 # System monitor (alternative)
 bottom
@@ -33,8 +37,5 @@ dust
 # HTTP client
 xh
 
-# WiFi TUI (if not available in distro)
-impala
-
-# Bluetooth TUI
-bluetui
+# Screenshot editor
+satty

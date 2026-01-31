@@ -1,5 +1,5 @@
 # cruzAlex Fedora Package List
-# Install with: sudo dnf install -y $(cat fedora.txt | grep -v '^#' | tr '\n' ' ')
+# Some packages may need COPR repos (handled by install script)
 
 # ═══════════════════════════════════════════════════════════════
 # Shell & Core Tools
@@ -29,8 +29,6 @@ ncdu
 # Development
 # ═══════════════════════════════════════════════════════════════
 neovim
-lazygit
-lazydocker
 
 # ═══════════════════════════════════════════════════════════════
 # Hyprland & Desktop
@@ -38,19 +36,15 @@ lazydocker
 hyprland
 hyprlock
 hypridle
-hyprsunset
 hyprpicker
 waybar
 mako
 swaybg
-swayosd
-walker
 wl-clipboard
 cliphist
 grim
 slurp
 wf-recorder
-satty
 playerctl
 
 # ═══════════════════════════════════════════════════════════════
@@ -66,7 +60,7 @@ jetbrains-mono-fonts
 google-noto-color-emoji-fonts
 
 # ═══════════════════════════════════════════════════════════════
-# Build Dependencies (for cargo/go apps)
+# Build Dependencies (for cargo apps)
 # ═══════════════════════════════════════════════════════════════
 gcc
 gcc-c++
@@ -87,7 +81,7 @@ wireplumber
 pavucontrol
 
 # ═══════════════════════════════════════════════════════════════
-# Network TUI Tools
+# Network
 # ═══════════════════════════════════════════════════════════════
 NetworkManager-tui
 bluez
@@ -97,3 +91,13 @@ bluez-tools
 # Browsers
 # ═══════════════════════════════════════════════════════════════
 chromium
+
+# ═══════════════════════════════════════════════════════════════
+# NOTE: These are installed via COPR or cargo:
+# - lazygit (COPR: atim/lazygit)
+# - lazydocker (cargo)
+# - walker (cargo or build from source)
+# - swayosd (COPR or build from source)
+# - hyprsunset (build from source)
+# - satty (cargo)
+# ═══════════════════════════════════════════════════════════════
