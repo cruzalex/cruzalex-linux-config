@@ -1,6 +1,15 @@
 # Build outputs
 tools/cruzalex-themes/target/
 
+# Generated theme state files (machine-specific)
+cruzalex/current
+cruzalex/.current-theme
+cruzalex/.nvim-colorscheme
+cruzalex/version
+config/waybar/colors.css
+config/waybar/theme.css
+config/mako/theme
+
 # IDE
 .idea/
 .vscode/
