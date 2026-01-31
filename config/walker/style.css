@@ -1,0 +1,119 @@
+/* cruzAlex Walker Style */
+/* Application launcher theming */
+
+* {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 14px;
+}
+
+#window {
+    background-color: rgba(18, 39, 56, 0.95);
+    border: 2px solid #ffc600;
+    border-radius: 12px;
+}
+
+#box {
+    padding: 8px;
+}
+
+#search {
+    background-color: rgba(31, 70, 98, 0.8);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+#search:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(255, 198, 0, 0.3);
+}
+
+#search placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+#list {
+    background-color: transparent;
+}
+
+#item {
+    padding: 10px 14px;
+    margin: 2px 0;
+    border-radius: 6px;
+    background-color: transparent;
+    color: #ffffff;
+}
+
+#item:hover {
+    background-color: rgba(255, 198, 0, 0.15);
+}
+
+#item:selected {
+    background-color: rgba(255, 198, 0, 0.3);
+    color: #ffc600;
+}
+
+#item #icon {
+    margin-right: 12px;
+}
+
+#item #text {
+    color: #ffffff;
+}
+
+#item #text #label {
+    font-weight: 500;
+}
+
+#item #text #sub {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+#item:selected #text #label {
+    color: #ffc600;
+}
+
+#spinner {
+    color: #ffc600;
+}
+
+#typeahead {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Module-specific styling */
+.applications #icon {
+    color: #6ae3fa;
+}
+
+.runner #icon {
+    color: #38de21;
+}
+
+.finder #icon {
+    color: #ffe50a;
+}
+
+.websearch #icon {
+    color: #1460d2;
+}
+
+.commands #icon {
+    color: #ff005d;
+}
+
+.clipboard #icon {
+    color: #ff005d;
+}
+
+.calc #icon {
+    color: #38de21;
+}
+
+.ssh #icon {
+    color: #6ae3fa;
+}

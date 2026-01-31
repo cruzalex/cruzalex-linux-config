@@ -1,0 +1,108 @@
+# cruzAlex Walker Configuration
+# Application launcher
+
+[ui]
+fullscreen = false
+anchor = "center"
+width = 600
+height = 400
+margin_top = 200
+margin_bottom = 0
+margin_left = 0
+margin_right = 0
+border_width = 2
+border_radius = 12
+corner_radius = 12
+
+[ui.window]
+box = true
+
+[ui.colors]
+# Colors are set via CSS theming
+background = "#122738"
+foreground = "#ffffff"
+accent = "#ffc600"
+border = "#ffc600"
+
+[search]
+placeholder = "Search..."
+delay = 0
+history = true
+history_max = 100
+
+[activation]
+close_on_activation = true
+close_on_focus_loss = true
+
+[modules]
+
+[modules.applications]
+enabled = true
+name = "Applications"
+prefix = ""
+show_generic = true
+show_sub_when_single = true
+context_aware = true
+prioritize_new = true
+
+[modules.runner]
+enabled = true
+name = "Run"
+prefix = "!"
+generic_entry = true
+
+[modules.ssh]
+enabled = true
+name = "SSH"
+prefix = ":"
+config = "~/.ssh/config"
+host_file = "/etc/hosts"
+
+[modules.finder]
+enabled = true
+name = "Files"
+prefix = "/"
+concurrency = 8
+ignore_gitignore = true
+refresh = true
+
+[modules.calc]
+enabled = true
+name = "Calculator"
+prefix = "="
+
+[modules.websearch]
+enabled = true
+name = "Search"
+prefix = "?"
+engines = [
+    { name = "Google", url = "https://google.com/search?q=%s" },
+    { name = "DuckDuckGo", url = "https://duckduckgo.com/?q=%s" },
+    { name = "GitHub", url = "https://github.com/search?q=%s" }
+]
+
+[modules.clipboard]
+enabled = true
+name = "Clipboard"
+prefix = "'"
+max_entries = 100
+
+[modules.windows]
+enabled = true
+name = "Windows"
+prefix = "@"
+
+[modules.commands]
+enabled = true
+name = "Commands"
+prefix = ">"
+entries = [
+    { label = "Lock Screen", exec = "hyprlock" },
+    { label = "Logout", exec = "hyprctl dispatch exit" },
+    { label = "Reboot", exec = "systemctl reboot" },
+    { label = "Shutdown", exec = "systemctl poweroff" },
+    { label = "Suspend", exec = "systemctl suspend" },
+    { label = "Theme Menu", exec = "cruzalex-theme-menu" },
+    { label = "Reload Waybar", exec = "pkill waybar; waybar &" },
+    { label = "Reload Hyprland", exec = "hyprctl reload" }
+]

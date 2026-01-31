@@ -1,0 +1,105 @@
+#!/bin/bash
+# cruzalex-theme-set - Apply a theme across all applications
+# Usage: cruzalex-theme-set <theme-name>
+
+set -e
+
+CRUZALEX_DIR="${CRUZALEX_DIR:-$HOME/.config/cruzalex}"
+THEMES_DIR="$CRUZALEX_DIR/themes"
+HOOKS_DIR="$CRUZALEX_DIR/hooks/theme-set.d"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+usage() {
+    echo "Usage: cruzalex-theme-set <theme-name>"
+    echo ""
+    echo "Apply a theme across all configured applications."
+    echo ""
+    echo "Examples:"
+    echo "  cruzalex-theme-set cobalt2"
+    echo "  cruzalex-theme-set tokyo-night"
+    echo ""
+    echo "Available themes:"
+    cruzalex-theme-list 2>/dev/null || ls -1 "$THEMES_DIR" 2>/dev/null || echo "  (none installed)"
+    exit 1
+}
+
+# Check arguments
+if [ $# -ne 1 ]; then
+    usage
+fi
+
+THEME_NAME="$1"
+THEME_DIR="$THEMES_DIR/$THEME_NAME"
+COLORS_FILE="$THEME_DIR/colors.toml"
+
+# Validate theme exists
+if [ ! -d "$THEME_DIR" ]; then
+    echo -e "${RED}Error: Theme not found: $THEME_NAME${NC}"
+    echo "Available themes:"
+    cruzalex-theme-list 2>/dev/null || ls -1 "$THEMES_DIR" 2>/dev/null || echo "  (none)"
+    exit 1
+fi
+
+# Parse colors.toml and export as environment variables
+parse_colors() {
+    if [ ! -f "$COLORS_FILE" ]; then
+        echo -e "${YELLOW}Warning: No colors.toml found in theme, using defaults${NC}"
+        return
+    fi
+
+    # Parse TOML-style color definitions
+    while IFS='=' read -r key value; do
+        # Skip comments and empty lines
+        [[ "$key" =~ ^[[:space:]]*# ]] && continue
+        [[ -z "$key" ]] && continue
+
+        # Clean up key and value
+        key=$(echo "$key" | tr -d '[:space:]' | tr -d '"')
+        value=$(echo "$value" | tr -d '[:space:]' | tr -d '"' | tr -d "'")
+
+        # Export as environment variable
+        if [ -n "$key" ] && [ -n "$value" ]; then
+            export "THEME_$key"="$value"
+        fi
+    done < "$COLORS_FILE"
+}
+
+echo -e "${GREEN}Applying theme: $THEME_NAME${NC}"
+
+# Export theme info
+export THEME_NAME
+export THEME_DIR
+export CRUZALEX_DIR
+
+# Parse colors
+parse_colors
+
+# Update the 'current' symlink atomically
+CURRENT_LINK="$CRUZALEX_DIR/current"
+NEW_LINK="$CRUZALEX_DIR/.current.new"
+
+ln -sfn "$THEME_DIR" "$NEW_LINK"
+mv -T "$NEW_LINK" "$CURRENT_LINK" 2>/dev/null || mv "$NEW_LINK" "$CURRENT_LINK"
+
+echo "  Theme directory: $THEME_DIR"
+
+# Run hook scripts in order
+if [ -d "$HOOKS_DIR" ]; then
+    echo "  Running hooks..."
+    for hook in "$HOOKS_DIR"/*.sh; do
+        if [ -x "$hook" ]; then
+            hook_name=$(basename "$hook")
+            echo -e "    ${YELLOW}→${NC} $hook_name"
+            "$hook" || echo -e "    ${RED}✗${NC} Hook failed: $hook_name"
+        fi
+    done
+else
+    echo -e "${YELLOW}  No hooks directory found${NC}"
+fi
+
+echo -e "${GREEN}Theme applied successfully!${NC}"

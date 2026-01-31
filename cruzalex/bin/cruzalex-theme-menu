@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# cruzAlex Theme Menu Script
+# Interactive theme selector using walker, wofi, or rofi
+
+set -euo pipefail
+
+CRUZALEX_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/cruzalex"
+THEMES_DIR="$CRUZALEX_DIR/themes"
+
+# Get current theme
+CURRENT=""
+if [[ -L "$THEMES_DIR/current" ]]; then
+    CURRENT=$(basename "$(readlink -f "$THEMES_DIR/current")")
+fi
+
+# Get list of themes
+if [[ ! -d "$THEMES_DIR" ]]; then
+    notify-send "Theme Menu" "No themes directory found" -u normal
+    exit 1
+fi
+
+# Build theme list
+THEME_LIST=""
+while IFS= read -r -d '' theme_dir; do
+    theme_name=$(basename "$theme_dir")
+    # Skip 'current' symlink
+    [[ "$theme_name" == "current" ]] && continue
+    # Check if it has colors.toml
+    [[ -f "$theme_dir/colors.toml" ]] || continue
+    # Mark current theme
+    if [[ "$theme_name" == "$CURRENT" ]]; then
+        THEME_LIST+="* $theme_name (current)"$'\n'
+    else
+        THEME_LIST+="  $theme_name"$'\n'
+    fi
+done < <(find "$THEMES_DIR" -maxdepth 1 -mindepth 1 -type d -print0 | sort -z)
+
+if [[ -z "$THEME_LIST" ]]; then
+    notify-send "Theme Menu" "No themes installed" -u normal
+    exit 1
+fi
+
+# Remove trailing newline
+THEME_LIST="${THEME_LIST%$'\n'}"
+
+# Detect available launcher
+LAUNCHER=""
+LAUNCHER_ARGS=""
+
+if command -v walker &> /dev/null; then
+    LAUNCHER="walker"
+    LAUNCHER_ARGS="--dmenu"
+elif command -v wofi &> /dev/null; then
+    LAUNCHER="wofi"
+    LAUNCHER_ARGS="--dmenu --prompt 'Select Theme' --width 400 --height 300"
+elif command -v rofi &> /dev/null; then
+    LAUNCHER="rofi"
+    LAUNCHER_ARGS="-dmenu -p 'Theme' -theme-str 'window {width: 400px;}'"
+elif command -v fuzzel &> /dev/null; then
+    LAUNCHER="fuzzel"
+    LAUNCHER_ARGS="--dmenu --prompt 'Theme: '"
+else
+    notify-send "Theme Menu" "No launcher found (walker, wofi, rofi, fuzzel)" -u critical
+    exit 1
+fi
+
+# Show menu and get selection
+SELECTION=$(echo -e "$THEME_LIST" | $LAUNCHER $LAUNCHER_ARGS 2>/dev/null) || exit 0
+
+# Parse selection (remove leading markers and trailing info)
+SELECTED_THEME=$(echo "$SELECTION" | sed 's/^[* ] //' | sed 's/ (current)$//')
+
+if [[ -z "$SELECTED_THEME" ]]; then
+    exit 0
+fi
+
+# Apply theme
+if [[ -x "$CRUZALEX_DIR/bin/cruzalex-theme-set" ]]; then
+    "$CRUZALEX_DIR/bin/cruzalex-theme-set" "$SELECTED_THEME"
+elif command -v cruzalex-theme-set &> /dev/null; then
+    cruzalex-theme-set "$SELECTED_THEME"
+else
+    notify-send "Theme Menu" "cruzalex-theme-set not found" -u critical
+    exit 1
+fi

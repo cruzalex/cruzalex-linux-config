@@ -1,0 +1,29 @@
+# Build outputs
+tools/cruzalex-themes/target/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local settings
+.claude/
+
+# Secrets (never commit)
+*.pem
+*.key
+.env
+.env.*
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+temp/

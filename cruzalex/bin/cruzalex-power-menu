@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# cruzAlex Power Menu
+# Lock, suspend, restart, shutdown options
+
+set -euo pipefail
+
+# Detect launcher
+if command -v walker &> /dev/null; then
+    LAUNCHER="walker --dmenu"
+elif command -v wofi &> /dev/null; then
+    LAUNCHER="wofi --dmenu --prompt 'Power' --width 200 --height 250"
+elif command -v fuzzel &> /dev/null; then
+    LAUNCHER="fuzzel --dmenu --prompt 'Power: '"
+elif command -v rofi &> /dev/null; then
+    LAUNCHER="rofi -dmenu -p 'Power'"
+else
+    notify-send "Power Menu" "No launcher found" -u critical
+    exit 1
+fi
+
+# Menu options
+OPTIONS="🔒 Lock
+💤 Suspend
+🔄 Restart Hyprland
+🔃 Reboot
+⏻ Shutdown
+❌ Cancel"
+
+# Show menu and get selection
+SELECTION=$(echo -e "$OPTIONS" | $LAUNCHER 2>/dev/null) || exit 0
+
+case "$SELECTION" in
+    "🔒 Lock")
+        hyprlock
+        ;;
+    "💤 Suspend")
+        systemctl suspend
+        ;;
+    "🔄 Restart Hyprland")
+        hyprctl reload
+        ;;
+    "🔃 Reboot")
+        systemctl reboot
+        ;;
+    "⏻ Shutdown")
+        systemctl poweroff
+        ;;
+    *)
+        exit 0
+        ;;
+esac

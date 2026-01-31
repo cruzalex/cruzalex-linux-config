@@ -1,0 +1,169 @@
+/* cruzAlex Waybar Style */
+/* Theme colors are injected via colors.css by theme hook */
+
+@import "colors.css";
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    min-height: 0;
+}
+
+window#waybar {
+    background: alpha(@background, 0.9);
+    border-radius: 12px;
+    border: 1px solid alpha(@accent, 0.3);
+}
+
+window#waybar.hidden {
+    opacity: 0.2;
+}
+
+/* Base module styling */
+#workspaces,
+#window,
+#clock,
+#tray,
+#pulseaudio,
+#network,
+#cpu,
+#memory,
+#battery,
+#custom-power {
+    padding: 0 12px;
+    margin: 4px 2px;
+    color: @foreground;
+    border-radius: 8px;
+    background: transparent;
+}
+
+/* Workspaces */
+#workspaces {
+    padding: 0 4px;
+}
+
+#workspaces button {
+    padding: 0 8px;
+    margin: 4px 2px;
+    color: alpha(@foreground, 0.5);
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+#workspaces button:hover {
+    background: alpha(@accent, 0.2);
+    color: @foreground;
+}
+
+#workspaces button.active {
+    background: alpha(@accent, 0.3);
+    color: @accent;
+}
+
+#workspaces button.urgent {
+    background: alpha(@color1, 0.3);
+    color: @color1;
+}
+
+/* Window title */
+#window {
+    color: alpha(@foreground, 0.7);
+    font-weight: 400;
+}
+
+/* Clock */
+#clock {
+    color: @foreground;
+    font-weight: 600;
+}
+
+/* System tray */
+#tray {
+    padding: 0 8px;
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+}
+
+/* Audio */
+#pulseaudio {
+    color: @color6;
+}
+
+#pulseaudio.muted {
+    color: alpha(@foreground, 0.4);
+}
+
+/* Network */
+#network {
+    color: @color4;
+}
+
+#network.disconnected {
+    color: alpha(@foreground, 0.4);
+}
+
+/* CPU */
+#cpu {
+    color: @color5;
+}
+
+/* Memory */
+#memory {
+    color: @color3;
+}
+
+/* Battery */
+#battery {
+    color: @color2;
+}
+
+#battery.charging,
+#battery.plugged {
+    color: @color2;
+}
+
+#battery.warning:not(.charging) {
+    color: @color3;
+}
+
+#battery.critical:not(.charging) {
+    color: @color1;
+    animation: blink 0.5s linear infinite alternate;
+}
+
+@keyframes blink {
+    to {
+        color: @foreground;
+    }
+}
+
+/* Power button */
+#custom-power {
+    color: @color1;
+    padding-right: 14px;
+}
+
+#custom-power:hover {
+    background: alpha(@color1, 0.2);
+}
+
+/* Tooltip */
+tooltip {
+    background: @background;
+    border: 1px solid alpha(@accent, 0.3);
+    border-radius: 8px;
+}
+
+tooltip label {
+    color: @foreground;
+    padding: 4px 8px;
+}

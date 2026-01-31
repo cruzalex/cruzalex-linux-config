@@ -1,0 +1,86 @@
+#!/bin/bash
+# cruzalex-theme-install - Install a theme from GitHub or Omarchy themes
+
+set -e
+
+CRUZALEX_DIR="${CRUZALEX_DIR:-$HOME/.config/cruzalex}"
+THEMES_DIR="$CRUZALEX_DIR/themes"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+usage() {
+    echo "Usage: cruzalex-theme-install <source>"
+    echo ""
+    echo "Install a theme from various sources."
+    echo ""
+    echo "Sources:"
+    echo "  GitHub URL:   cruzalex-theme-install https://github.com/user/theme"
+    echo "  Theme name:   cruzalex-theme-install cobalt2"
+    echo "                (fetches from omarchythemes.com)"
+    echo ""
+    echo "Examples:"
+    echo "  cruzalex-theme-install https://github.com/omarchy/cobalt2-theme"
+    echo "  cruzalex-theme-install tokyo-night"
+    exit 1
+}
+
+if [ $# -ne 1 ]; then
+    usage
+fi
+
+SOURCE="$1"
+
+# Ensure themes directory exists
+mkdir -p "$THEMES_DIR"
+
+# Determine if it's a URL or theme name
+if [[ "$SOURCE" =~ ^https?:// ]]; then
+    # Git clone from URL
+    THEME_NAME=$(basename "$SOURCE" .git | sed 's/-theme$//')
+    THEME_DIR="$THEMES_DIR/$THEME_NAME"
+
+    if [ -d "$THEME_DIR" ]; then
+        echo -e "${YELLOW}Theme already exists: $THEME_NAME${NC}"
+        read -p "Update it? (y/N) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "Updating theme..."
+            cd "$THEME_DIR" && git pull
+        else
+            exit 0
+        fi
+    else
+        echo "Cloning theme: $THEME_NAME"
+        git clone "$SOURCE" "$THEME_DIR"
+    fi
+else
+    # Try to fetch from Omarchy themes
+    THEME_NAME="$SOURCE"
+    THEME_DIR="$THEMES_DIR/$THEME_NAME"
+    OMARCHY_URL="https://github.com/omarchy/${THEME_NAME}-theme"
+
+    if [ -d "$THEME_DIR" ]; then
+        echo -e "${YELLOW}Theme already exists: $THEME_NAME${NC}"
+        exit 0
+    fi
+
+    echo "Attempting to fetch from Omarchy themes..."
+    if git clone "$OMARCHY_URL" "$THEME_DIR" 2>/dev/null; then
+        echo -e "${GREEN}Theme installed: $THEME_NAME${NC}"
+    else
+        echo -e "${RED}Could not find theme: $THEME_NAME${NC}"
+        echo ""
+        echo "Try providing a full GitHub URL:"
+        echo "  cruzalex-theme-install https://github.com/user/theme-repo"
+        exit 1
+    fi
+fi
+
+echo ""
+echo -e "${GREEN}Theme installed successfully: $THEME_NAME${NC}"
+echo ""
+echo "Apply it with: cruzalex-theme-set $THEME_NAME"

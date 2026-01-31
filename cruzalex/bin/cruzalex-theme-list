@@ -1,0 +1,38 @@
+#!/bin/bash
+# cruzalex-theme-list - List available themes
+
+CRUZALEX_DIR="${CRUZALEX_DIR:-$HOME/.config/cruzalex}"
+THEMES_DIR="$CRUZALEX_DIR/themes"
+CURRENT_LINK="$CRUZALEX_DIR/current"
+
+# Get current theme name
+CURRENT_THEME=""
+if [ -L "$CURRENT_LINK" ]; then
+    CURRENT_THEME=$(basename "$(readlink "$CURRENT_LINK")")
+fi
+
+echo "Available themes:"
+echo ""
+
+if [ ! -d "$THEMES_DIR" ] || [ -z "$(ls -A "$THEMES_DIR" 2>/dev/null)" ]; then
+    echo "  (no themes installed)"
+    echo ""
+    echo "Install themes with: cruzalex-theme-install <github-url>"
+    exit 0
+fi
+
+for theme_dir in "$THEMES_DIR"/*/; do
+    if [ -d "$theme_dir" ]; then
+        theme_name=$(basename "$theme_dir")
+
+        # Check if this is the current theme
+        if [ "$theme_name" = "$CURRENT_THEME" ]; then
+            echo "  * $theme_name (active)"
+        else
+            echo "    $theme_name"
+        fi
+    fi
+done
+
+echo ""
+echo "Use 'cruzalex-theme-set <name>' to apply a theme."

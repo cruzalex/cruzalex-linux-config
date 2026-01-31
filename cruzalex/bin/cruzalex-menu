@@ -1,0 +1,229 @@
+#!/usr/bin/env bash
+# cruzAlex Main Menu
+# Central control menu like Omarchy
+
+set -euo pipefail
+
+# Detect launcher
+if command -v walker &> /dev/null; then
+    LAUNCHER="walker --dmenu"
+elif command -v wofi &> /dev/null; then
+    LAUNCHER="wofi --dmenu --prompt 'cruzAlex' --width 400 --height 400"
+elif command -v fuzzel &> /dev/null; then
+    LAUNCHER="fuzzel --dmenu --prompt 'cruzAlex: '"
+else
+    notify-send "cruzAlex Menu" "No launcher found" -u critical
+    exit 1
+fi
+
+# Menu categories
+MAIN_MENU="🎨 Style
+🖥️  System
+📦 Packages
+⚙️  Settings
+🔧 Tools
+❓ Help"
+
+show_style_menu() {
+    local options="🎨 Pick Theme
+🖼️  Next Wallpaper
+🔄 Toggle Wallpaper Rotation
+🌙 Toggle Nightlight
+👁️  Toggle Transparency"
+
+    local selection
+    selection=$(echo -e "$options" | $LAUNCHER 2>/dev/null) || return
+
+    case "$selection" in
+        "🎨 Pick Theme")
+            ghostty -e cruzalex-themes &
+            ;;
+        "🖼️  Next Wallpaper")
+            cruzalex-wallpaper-next
+            ;;
+        "🔄 Toggle Wallpaper Rotation")
+            cruzalex-wallpaper-rotate toggle
+            ;;
+        "🌙 Toggle Nightlight")
+            pkill hyprsunset || hyprsunset -t 4500 &
+            ;;
+        "👁️  Toggle Transparency")
+            hyprctl setprop active opaque toggle
+            ;;
+    esac
+}
+
+show_system_menu() {
+    local options="📊 Activity Monitor
+🔊 Audio Settings
+📶 WiFi Settings
+📱 Bluetooth Settings
+🔒 Lock Screen
+💤 Suspend
+🔄 Reload Hyprland
+🔃 Reboot
+⏻ Shutdown"
+
+    local selection
+    selection=$(echo -e "$options" | $LAUNCHER 2>/dev/null) || return
+
+    case "$selection" in
+        "📊 Activity Monitor")
+            ghostty -e btop &
+            ;;
+        "🔊 Audio Settings")
+            pavucontrol &
+            ;;
+        "📶 WiFi Settings")
+            ghostty -e impala &
+            ;;
+        "📱 Bluetooth Settings")
+            ghostty -e bluetui &
+            ;;
+        "🔒 Lock Screen")
+            hyprlock
+            ;;
+        "💤 Suspend")
+            systemctl suspend
+            ;;
+        "🔄 Reload Hyprland")
+            hyprctl reload
+            ;;
+        "🔃 Reboot")
+            systemctl reboot
+            ;;
+        "⏻ Shutdown")
+            systemctl poweroff
+            ;;
+    esac
+}
+
+show_packages_menu() {
+    local options="📦 Update System
+➕ Install Package
+➖ Remove Package"
+
+    local selection
+    selection=$(echo -e "$options" | $LAUNCHER 2>/dev/null) || return
+
+    case "$selection" in
+        "📦 Update System")
+            if command -v dnf &> /dev/null; then
+                ghostty -e sudo dnf upgrade &
+            else
+                ghostty -e sudo pacman -Syu &
+            fi
+            ;;
+        "➕ Install Package")
+            ghostty -e bash -c 'read -p "Package name: " pkg && sudo dnf install "$pkg" || sudo pacman -S "$pkg"' &
+            ;;
+        "➖ Remove Package")
+            ghostty -e bash -c 'read -p "Package name: " pkg && sudo dnf remove "$pkg" || sudo pacman -Rs "$pkg"' &
+            ;;
+    esac
+}
+
+show_settings_menu() {
+    local options="⌨️  Edit Keybindings
+🖥️  Edit Hyprland Config
+📁 Edit Dotfiles
+🐚 Edit Shell Config"
+
+    local selection
+    selection=$(echo -e "$options" | $LAUNCHER 2>/dev/null) || return
+
+    case "$selection" in
+        "⌨️  Edit Keybindings")
+            ghostty -e nvim ~/.config/hypr/bindings.conf &
+            ;;
+        "🖥️  Edit Hyprland Config")
+            ghostty -e nvim ~/.config/hypr/hyprland.conf &
+            ;;
+        "📁 Edit Dotfiles")
+            ghostty -e yazi ~/.config &
+            ;;
+        "🐚 Edit Shell Config")
+            ghostty -e nvim ~/.zshrc &
+            ;;
+    esac
+}
+
+show_tools_menu() {
+    local options="📝 Neovim
+🗂️  Yazi (Files)
+🐙 Lazygit
+🐳 Lazydocker
+🎵 Spotify Player"
+
+    local selection
+    selection=$(echo -e "$options" | $LAUNCHER 2>/dev/null) || return
+
+    case "$selection" in
+        "📝 Neovim")
+            ghostty -e nvim &
+            ;;
+        "🗂️  Yazi (Files)")
+            ghostty -e yazi &
+            ;;
+        "🐙 Lazygit")
+            ghostty -e lazygit &
+            ;;
+        "🐳 Lazydocker")
+            ghostty -e lazydocker &
+            ;;
+        "🎵 Spotify Player")
+            ghostty -e spotify_player &
+            ;;
+    esac
+}
+
+show_help_menu() {
+    local options="⌨️  Show Keybindings
+📚 Open Documentation
+🐛 Report Issue
+ℹ️  About cruzAlex"
+
+    local selection
+    selection=$(echo -e "$options" | $LAUNCHER 2>/dev/null) || return
+
+    case "$selection" in
+        "⌨️  Show Keybindings")
+            ghostty -e cruzalex-keybindings &
+            ;;
+        "📚 Open Documentation")
+            chromium https://github.com/cruzalex/cruzalex-linux-config &
+            ;;
+        "🐛 Report Issue")
+            chromium https://github.com/cruzalex/cruzalex-linux-config/issues &
+            ;;
+        "ℹ️  About cruzAlex")
+            local version
+            version=$(cat ~/.config/cruzalex/version 2>/dev/null || echo "0.1.0")
+            notify-send "cruzAlex Linux" "Version: $version\n\nA TUI-first Linux experience inspired by Omarchy" -u normal
+            ;;
+    esac
+}
+
+# Main menu
+SELECTION=$(echo -e "$MAIN_MENU" | $LAUNCHER 2>/dev/null) || exit 0
+
+case "$SELECTION" in
+    "🎨 Style")
+        show_style_menu
+        ;;
+    "🖥️  System")
+        show_system_menu
+        ;;
+    "📦 Packages")
+        show_packages_menu
+        ;;
+    "⚙️  Settings")
+        show_settings_menu
+        ;;
+    "🔧 Tools")
+        show_tools_menu
+        ;;
+    "❓ Help")
+        show_help_menu
+        ;;
+esac

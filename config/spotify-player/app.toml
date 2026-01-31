@@ -1,0 +1,86 @@
+# cruzAlex Spotify Player Configuration
+# TUI Spotify client
+
+[device]
+name = "cruzalex-spotify"
+device_type = "computer"
+volume = 70
+bitrate = 320
+audio_cache = true
+normalization = false
+
+[playback]
+# Available backends: rodio, pulseaudio, alsa
+backend = "pulseaudio"
+# Gapless playback
+gapless = true
+
+[interface]
+# Theme is set by theme hooks
+theme = "default"
+
+# Show playback window borders
+playback_window_position = "Top"
+
+# Progress bar character
+progress_bar_character = "─"
+
+# Cover image
+cover_image = true
+cover_image_width = 10
+
+# Show track table headers
+track_table_item_max_len = 32
+
+# Page size for scrolling
+page_size_in_rows = 20
+
+# Enable vim keybindings
+vim_key_enabled = true
+
+[keymaps]
+# Movement (vim-style)
+"j" = "SelectNextItem"
+"k" = "SelectPreviousItem"
+"g g" = "SelectFirstItem"
+"G" = "SelectLastItem"
+"ctrl+d" = "PageDown"
+"ctrl+u" = "PageUp"
+
+# Playback
+"space" = "TogglePause"
+"n" = "NextTrack"
+"p" = "PreviousTrack"
+">" = "SeekForward"
+"<" = "SeekBackward"
+"+" = "VolumeUp"
+"-" = "VolumeDown"
+"m" = "ToggleMute"
+"s" = "ToggleShuffle"
+"r" = "ToggleRepeat"
+
+# Navigation
+"enter" = "Play"
+"backspace" = "Back"
+"tab" = "FocusNextWindow"
+"shift+tab" = "FocusPreviousWindow"
+"/" = "Search"
+"escape" = "ClosePopup"
+"q" = "Quit"
+
+# Actions
+"l" = "AddToLibrary"
+"L" = "RemoveFromLibrary"
+"f" = "AddToQueue"
+"F" = "AddToPlaylist"
+"d" = "ShowDevices"
+"?" = "ShowHelp"
+
+[library]
+# Library display options
+default_view = "Playlists"
+
+[search]
+# Search options
+default_search_type = "tracks"
+limit = 50

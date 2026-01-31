@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# cruzAlex Wallpaper Rotation Script
+# Cycles through wallpapers in the current theme
+
+set -euo pipefail
+
+CRUZALEX_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/cruzalex"
+WALLPAPER_DIR="$CRUZALEX_DIR/wallpapers"
+STATE_FILE="$CRUZALEX_DIR/.wallpaper-index"
+
+# Get current theme
+CURRENT_THEME_LINK="$CRUZALEX_DIR/themes/current"
+if [[ -L "$CURRENT_THEME_LINK" ]]; then
+    THEME_DIR=$(readlink -f "$CURRENT_THEME_LINK")
+    THEME_WALLPAPERS="$THEME_DIR/wallpapers"
+else
+    THEME_WALLPAPERS=""
+fi
+
+# Find wallpaper directory (theme-specific or global)
+if [[ -d "$THEME_WALLPAPERS" ]] && [[ -n "$(ls -A "$THEME_WALLPAPERS" 2>/dev/null)" ]]; then
+    WALLPAPER_DIR="$THEME_WALLPAPERS"
+elif [[ ! -d "$WALLPAPER_DIR" ]] || [[ -z "$(ls -A "$WALLPAPER_DIR" 2>/dev/null)" ]]; then
+    notify-send "Wallpaper" "No wallpapers found in $WALLPAPER_DIR" -u low
+    exit 1
+fi
+
+# Get list of wallpapers (jpg, jpeg, png, webp)
+mapfile -t WALLPAPERS < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) | sort)
+
+if [[ ${#WALLPAPERS[@]} -eq 0 ]]; then
+    notify-send "Wallpaper" "No wallpapers found" -u low
+    exit 1
+fi
+
+# Read current index
+if [[ -f "$STATE_FILE" ]]; then
+    CURRENT_INDEX=$(cat "$STATE_FILE")
+else
+    CURRENT_INDEX=0
+fi
+
+# Calculate next index
+NEXT_INDEX=$(( (CURRENT_INDEX + 1) % ${#WALLPAPERS[@]} ))
+
+# Get next wallpaper
+NEXT_WALLPAPER="${WALLPAPERS[$NEXT_INDEX]}"
+
+# Set wallpaper using swaybg or hyprpaper
+if pgrep -x swaybg > /dev/null; then
+    # Kill existing swaybg and start new one
+    pkill swaybg || true
+    swaybg -i "$NEXT_WALLPAPER" -m fill &
+elif command -v hyprctl &> /dev/null; then
+    # Try hyprpaper
+    hyprctl hyprpaper preload "$NEXT_WALLPAPER" 2>/dev/null || true
+    hyprctl hyprpaper wallpaper ",$NEXT_WALLPAPER" 2>/dev/null || {
+        # Fallback to swaybg
+        pkill swaybg || true
+        swaybg -i "$NEXT_WALLPAPER" -m fill &
+    }
+else
+    # Default to swaybg
+    pkill swaybg || true
+    swaybg -i "$NEXT_WALLPAPER" -m fill &
+fi
+
+# Save index
+echo "$NEXT_INDEX" > "$STATE_FILE"
+
+# Notify
+WALLPAPER_NAME=$(basename "$NEXT_WALLPAPER")
+notify-send "Wallpaper" "Set to: $WALLPAPER_NAME" -u low -t 2000

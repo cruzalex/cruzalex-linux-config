@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# cruzAlex Wallpaper Auto-Rotation Daemon
+# Rotates wallpapers every N minutes
+
+set -euo pipefail
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/cruzalex"
+STATE_FILE="$CONFIG_DIR/.wallpaper-rotate.pid"
+INTERVAL="${1:-5}"  # Default 5 minutes
+
+usage() {
+    echo "Usage: cruzalex-wallpaper-rotate [command] [interval]"
+    echo ""
+    echo "Commands:"
+    echo "  start [N]   Start rotation every N minutes (default: 5)"
+    echo "  stop        Stop rotation"
+    echo "  status      Check if rotation is running"
+    echo "  toggle      Toggle rotation on/off"
+    echo ""
+    echo "Examples:"
+    echo "  cruzalex-wallpaper-rotate start 10   # Rotate every 10 minutes"
+    echo "  cruzalex-wallpaper-rotate stop"
+    echo "  cruzalex-wallpaper-rotate toggle"
+}
+
+is_running() {
+    if [[ -f "$STATE_FILE" ]]; then
+        local pid
+        pid=$(cat "$STATE_FILE")
+        if kill -0 "$pid" 2>/dev/null; then
+            return 0
+        fi
+    fi
+    return 1
+}
+
+start_rotation() {
+    if is_running; then
+        echo "Wallpaper rotation already running (PID: $(cat "$STATE_FILE"))"
+        return 0
+    fi
+
+    echo "Starting wallpaper rotation every $INTERVAL minutes..."
+
+    # Start background loop
+    (
+        while true; do
+            sleep "$((INTERVAL * 60))"
+            cruzalex-wallpaper-next 2>/dev/null || true
+        done
+    ) &
+
+    local pid=$!
+    echo "$pid" > "$STATE_FILE"
+    echo "Started (PID: $pid)"
+    notify-send "Wallpaper Rotation" "Enabled (every $INTERVAL min)" -u low
+}
+
+stop_rotation() {
+    if ! is_running; then
+        echo "Wallpaper rotation not running"
+        return 0
+    fi
+
+    local pid
+    pid=$(cat "$STATE_FILE")
+    kill "$pid" 2>/dev/null || true
+    rm -f "$STATE_FILE"
+    echo "Stopped"
+    notify-send "Wallpaper Rotation" "Disabled" -u low
+}
+
+status_rotation() {
+    if is_running; then
+        echo "Running (PID: $(cat "$STATE_FILE"))"
+    else
+        echo "Not running"
+    fi
+}
+
+toggle_rotation() {
+    if is_running; then
+        stop_rotation
+    else
+        start_rotation
+    fi
+}
+
+case "${1:-start}" in
+    start)
+        INTERVAL="${2:-5}"
+        start_rotation
+        ;;
+    stop)
+        stop_rotation
+        ;;
+    status)
+        status_rotation
+        ;;
+    toggle)
+        toggle_rotation
+        ;;
+    -h|--help|help)
+        usage
+        ;;
+    *)
+        # If first arg is a number, treat as interval
+        if [[ "$1" =~ ^[0-9]+$ ]]; then
+            INTERVAL="$1"
+            start_rotation
+        else
+            echo "Unknown command: $1"
+            usage
+            exit 1
+        fi
+        ;;
+esac

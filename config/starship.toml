@@ -1,0 +1,94 @@
+# cruzAlex Starship Prompt Configuration
+# Minimal, informative, and fast
+
+format = """
+$directory\
+$git_branch\
+$git_status\
+$rust\
+$python\
+$nodejs\
+$golang\
+$docker_context\
+$cmd_duration\
+$line_break\
+$character"""
+
+# Timeout for commands
+command_timeout = 500
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold green)"
+
+[directory]
+style = "bold cyan"
+truncation_length = 3
+truncate_to_repo = true
+fish_style_pwd_dir_length = 1
+read_only = " 🔒"
+
+[git_branch]
+symbol = " "
+style = "bold purple"
+format = "[$symbol$branch]($style) "
+
+[git_status]
+format = '([$all_status$ahead_behind]($style) )'
+style = "bold yellow"
+conflicted = "="
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+untracked = "?${count}"
+stashed = "📦"
+modified = "!${count}"
+staged = "+${count}"
+renamed = "»${count}"
+deleted = "✘${count}"
+
+[cmd_duration]
+min_time = 2000
+format = "[$duration]($style) "
+style = "bold yellow"
+show_notifications = false
+
+[rust]
+symbol = "🦀 "
+format = "[$symbol($version )]($style)"
+style = "bold red"
+
+[python]
+symbol = "🐍 "
+format = '[${symbol}${pyenv_prefix}(${version} )(\($virtualenv\) )]($style)'
+style = "bold yellow"
+
+[nodejs]
+symbol = "⬢ "
+format = "[$symbol($version )]($style)"
+style = "bold green"
+
+[golang]
+symbol = "🐹 "
+format = "[$symbol($version )]($style)"
+style = "bold cyan"
+
+[docker_context]
+symbol = "🐳 "
+format = "[$symbol$context]($style) "
+style = "bold blue"
+only_with_files = true
+
+# Disabled modules for speed
+[aws]
+disabled = true
+
+[gcloud]
+disabled = true
+
+[azure]
+disabled = true
+
+[package]
+disabled = true

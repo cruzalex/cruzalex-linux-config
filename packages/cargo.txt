@@ -1,0 +1,40 @@
+# cruzAlex Cargo Package List
+# Rust-based TUI applications
+
+# Shell prompt
+starship
+
+# Modern ls replacement
+eza
+
+# File manager (TUI)
+yazi-fm
+yazi-cli
+
+# Git TUI (alternative)
+gitui
+
+# System monitor (alternative)
+bottom
+
+# Spotify TUI player
+spotify_player
+
+# Network tools
+gping
+bandwhich
+
+# Process viewer
+procs
+
+# Disk usage
+dust
+
+# HTTP client
+xh
+
+# WiFi TUI (if not available in distro)
+impala
+
+# Bluetooth TUI
+bluetui

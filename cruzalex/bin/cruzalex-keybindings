@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+# cruzAlex Keybindings Display
+# Shows all available keybindings in a searchable format
+
+set -euo pipefail
+
+KEYBINDINGS="
+=== CORE ===
+Super + Space         | Application launcher
+Super + Alt + Space   | cruzAlex menu
+Super + Return        | Terminal (Ghostty)
+Super + K             | Show keybindings (this)
+Super + Escape        | Power menu
+
+=== WINDOW MANAGEMENT ===
+Super + W             | Close window
+Ctrl + Alt + Delete   | Close all windows
+Super + T             | Toggle floating
+Super + O             | Toggle sticky (pin)
+Super + F             | Fullscreen
+Super + Alt + F       | Full width (keep bar)
+Super + J             | Toggle split direction
+
+=== FOCUS & MOVE ===
+Super + Arrows        | Focus direction
+Super + Shift + Arrows| Move window
+Super + =             | Grow right
+Super + -             | Grow left
+Super + Shift + =     | Grow down
+Super + Shift + -     | Grow up
+
+=== GROUPS ===
+Super + G             | Toggle group
+Super + Alt + G       | Remove from group
+Super + Alt + Tab     | Cycle in group
+
+=== WORKSPACES ===
+Super + 1-9           | Switch workspace
+Super + Shift + 1-9   | Move to workspace
+Super + Tab           | Next workspace
+Super + Shift + Tab   | Previous workspace
+Super + Ctrl + Tab    | Former workspace
+Super + S             | Show scratchpad
+Super + Alt + S       | Move to scratchpad
+
+=== APPLICATIONS ===
+Super + Shift + B     | Browser (Chromium)
+Super + Shift + Alt + B| Browser (Private)
+Super + Shift + F     | File manager (Yazi)
+Super + Shift + M     | Music (Spotify)
+Super + Shift + N     | Editor (Neovim)
+Super + Shift + D     | Docker (Lazydocker)
+Super + Shift + G     | Git (Lazygit)
+Super + Shift + A     | AI (ChatGPT)
+Super + Shift + X     | X (Twitter)
+Super + Shift + Y     | YouTube
+
+=== SYSTEM CONTROLS ===
+Super + Ctrl + T      | Activity monitor (btop)
+Super + Ctrl + A      | Audio controls
+Super + Ctrl + B      | Bluetooth controls
+Super + Ctrl + W      | WiFi controls
+Super + Ctrl + L      | Lock screen
+
+=== CLIPBOARD ===
+Super + C             | Copy
+Super + X             | Cut
+Super + V             | Paste
+Super + Ctrl + V      | Clipboard history
+
+=== SCREENSHOTS ===
+Print                 | Screenshot region (edit)
+Shift + Print         | Screenshot to clipboard
+Super + Print         | Full screenshot
+Super + Shift + Print | Color picker
+Alt + Print           | Screen recording
+
+=== NOTIFICATIONS ===
+Super + ,             | Dismiss notification
+Super + Shift + ,     | Dismiss all
+Super + Ctrl + ,      | Toggle DND
+Super + Alt + ,       | Invoke action
+
+=== THEME & STYLE ===
+Super + Ctrl + Shift + Space | Theme picker TUI
+Super + Ctrl + Space  | Next wallpaper
+Super + Backspace     | Toggle transparency
+
+=== TOGGLES ===
+Super + Shift + Space | Toggle top bar
+Super + Ctrl + N      | Toggle nightlight
+Super + Ctrl + I      | Toggle idle prevention
+
+=== MEDIA ===
+XF86AudioRaiseVolume  | Volume up
+XF86AudioLowerVolume  | Volume down
+XF86AudioMute         | Toggle mute
+XF86MonBrightnessUp   | Brightness up
+XF86MonBrightnessDown | Brightness down
+XF86AudioPlay         | Play/Pause
+XF86AudioNext         | Next track
+XF86AudioPrev         | Previous track
+"
+
+# Show in pager or launcher
+if [[ -t 1 ]]; then
+    # Running in terminal, use fzf if available
+    if command -v fzf &> /dev/null; then
+        echo "$KEYBINDINGS" | fzf --ansi --no-sort --layout=reverse --header="cruzAlex Keybindings (press Enter to close)"
+    else
+        echo "$KEYBINDINGS" | less
+    fi
+else
+    # Not in terminal, show notification
+    notify-send "Keybindings" "Open terminal and run: cruzalex-keybindings"
+fi

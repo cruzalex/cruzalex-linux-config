@@ -1,0 +1,48 @@
+# Cobalt2 Theme for cruzAlex
+# Based on Wes Bos's Cobalt2 theme
+
+# Primary colors
+foreground = "#ffffff"
+background = "#193549"
+accent = "#ffc600"
+
+# Cursor
+cursor = "#ffc600"
+cursor_text = "#193549"
+
+# Selection
+selection = "#0050a4"
+selection_text = "#ffffff"
+
+# ANSI Colors
+# Black
+color0 = "#000000"
+color8 = "#555555"
+
+# Red
+color1 = "#ff0000"
+color9 = "#ff5555"
+
+# Green
+color2 = "#38de21"
+color10 = "#98e343"
+
+# Yellow
+color3 = "#ffc600"
+color11 = "#f3f99d"
+
+# Blue
+color4 = "#0088ff"
+color12 = "#55bbff"
+
+# Magenta
+color5 = "#ff00ff"
+color13 = "#f94fa0"
+
+# Cyan
+color6 = "#00ffff"
+color14 = "#55ffff"
+
+# White
+color7 = "#cccccc"
+color15 = "#ffffff"

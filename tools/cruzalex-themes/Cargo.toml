@@ -1,0 +1,46 @@
+[package]
+name = "cruzalex-themes"
+version = "0.1.0"
+edition = "2021"
+authors = ["cruzAlex"]
+description = "TUI theme browser for cruzAlex Linux - browse, preview, and install Omarchy themes"
+license = "MIT"
+repository = "https://github.com/cruzalex/cruzalex-linux-config"
+keywords = ["tui", "themes", "omarchy", "linux", "terminal"]
+categories = ["command-line-interface"]
+
+[dependencies]
+# TUI framework
+ratatui = "0.29"
+crossterm = "0.28"
+
+# Image support for terminal
+ratatui-image = "3"
+image = "0.25"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# HTTP client for fetching themes
+reqwest = { version = "0.12", features = ["json"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Error handling
+anyhow = "1"
+thiserror = "1"
+
+# Utilities
+dirs = "5"
+walkdir = "2"
+git2 = "0.19"
+
+[[bin]]
+name = "cruzalex-themes"
+path = "src/main.rs"
