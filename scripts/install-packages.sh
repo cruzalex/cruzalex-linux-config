@@ -76,4 +76,54 @@ else
     $PKG_INSTALL $PACKAGES || true
 fi
 
+# Install JetBrainsMono Nerd Font (required for TUI icons)
+echo ""
+echo "=== Installing JetBrainsMono Nerd Font ==="
+
+FONT_DIR="$HOME/.local/share/fonts/JetBrainsMono"
+FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip"
+
+# Check if already installed
+if fc-list | grep -qi "JetBrainsMono Nerd Font"; then
+    echo "  JetBrainsMono Nerd Font already installed"
+else
+    echo "  Downloading JetBrainsMono Nerd Font..."
+    mkdir -p "$FONT_DIR"
+
+    if curl -fLo /tmp/JetBrainsMono.zip "$FONT_URL" 2>/dev/null; then
+        echo "  Extracting fonts..."
+        unzip -oq /tmp/JetBrainsMono.zip -d "$FONT_DIR"
+        rm -f /tmp/JetBrainsMono.zip
+
+        echo "  Rebuilding font cache..."
+        fc-cache -f "$FONT_DIR"
+
+        echo "  JetBrainsMono Nerd Font installed successfully"
+    else
+        echo "  Warning: Could not download JetBrainsMono Nerd Font"
+        echo "  TUI apps may not display icons correctly"
+        echo "  You can install manually from: $FONT_URL"
+    fi
+fi
+
+# Install Flatpak apps
+echo ""
+echo "=== Installing Flatpak apps ==="
+
+FLATPAK_FILE="$REPO_DIR/packages/flatpak.txt"
+if [ -f "$FLATPAK_FILE" ] && command -v flatpak &> /dev/null; then
+    # Ensure Flathub is added
+    flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo 2>/dev/null || true
+
+    FLATPAKS=$(grep -v '^#' "$FLATPAK_FILE" | grep -v '^$' | tr '\n' ' ')
+    if [ -n "$FLATPAKS" ]; then
+        echo "Installing: $FLATPAKS"
+        for pkg in $FLATPAKS; do
+            flatpak install -y flathub "$pkg" 2>/dev/null || echo "  Could not install $pkg"
+        done
+    fi
+else
+    echo "  Flatpak not available or no flatpak.txt found, skipping"
+fi
+
 echo "=== System packages installed ==="

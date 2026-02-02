@@ -39,7 +39,24 @@ generate_css_vars() {
 
 generate_css_vars
 
-# Restart Waybar if running
+# Restart Waybar to apply new CSS (waybar doesn't support live CSS reload)
 if pgrep -x "waybar" > /dev/null; then
-    pkill -SIGUSR2 waybar 2>/dev/null || killall -SIGUSR2 waybar 2>/dev/null || true
+    # Graceful shutdown first
+    killall -TERM waybar 2>/dev/null || true
+
+    # Wait for waybar to exit (up to 1 second)
+    for i in {1..10}; do
+        pgrep -x waybar > /dev/null || break
+        sleep 0.1
+    done
+
+    # Force kill if still running
+    pgrep -x waybar > /dev/null && killall -9 waybar 2>/dev/null
+
+    # Small delay to ensure cleanup
+    sleep 0.1
+
+    # Start fresh instance
+    waybar >/dev/null 2>&1 &
+    disown
 fi

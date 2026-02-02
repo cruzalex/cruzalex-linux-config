@@ -132,3 +132,17 @@ cat << 'EOF'
 ╚═══════════════════════════════════════════════════════════════════╝
 EOF
 echo -e "${NC}"
+
+# Offer to run setup wizard
+echo ""
+read -p "Run the setup wizard now to configure Spotify and choose a theme? (Y/n) " -n 1 -r
+echo ""
+if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+    if [ -x "$HOME/.config/cruzalex/bin/cruzalex-setup" ]; then
+        exec "$HOME/.config/cruzalex/bin/cruzalex-setup"
+    elif [ -x "$HOME/.local/bin/cruzalex-setup" ]; then
+        exec "$HOME/.local/bin/cruzalex-setup"
+    else
+        echo "Setup wizard not found. Run 'cruzalex-setup' after relogging."
+    fi
+fi

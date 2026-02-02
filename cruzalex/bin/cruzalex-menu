@@ -36,13 +36,13 @@ show_style_menu() {
 
     case "$selection" in
         "🎨 Pick Theme")
-            ghostty -e cruzalex-themes &
+            ghostty -e ~/.config/cruzalex/bin/cruzalex-themes &
             ;;
         "🖼️  Next Wallpaper")
-            cruzalex-wallpaper-next
+            ~/.config/cruzalex/bin/cruzalex-wallpaper-next
             ;;
         "🔄 Toggle Wallpaper Rotation")
-            cruzalex-wallpaper-rotate toggle
+            ~/.config/cruzalex/bin/cruzalex-wallpaper-rotate toggle
             ;;
         "🌙 Toggle Nightlight")
             pkill hyprsunset || hyprsunset -t 4500 &
@@ -188,7 +188,7 @@ show_help_menu() {
 
     case "$selection" in
         "⌨️  Show Keybindings")
-            ghostty -e cruzalex-keybindings &
+            ghostty -e ~/.config/cruzalex/bin/cruzalex-keybindings &
             ;;
         "📚 Open Documentation")
             chromium https://github.com/cruzalex/cruzalex-linux-config &

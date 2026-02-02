@@ -27,17 +27,22 @@ apply_colors() {
     local background=$(grep '^background *=' "$colors_file" | head -1 | cut -d'"' -f2 | tr -d '#')
 
     if [ -n "$accent" ]; then
-        # Set active border color
-        hyprctl keyword general:col.active_border "rgb($accent)" 2>/dev/null || true
+        # Set active border color (with timeout)
+        timeout --kill-after=0.2 0.5 \
+            hyprctl keyword general:col.active_border "rgb($accent)" 2>/dev/null || true
     fi
 
     if [ -n "$background" ]; then
         # Set inactive border color (dimmed) - use rgba() for alpha support
-        hyprctl keyword general:col.inactive_border "rgba(${background}88)" 2>/dev/null || true
+        timeout --kill-after=0.2 0.5 \
+            hyprctl keyword general:col.inactive_border "rgba(${background}88)" 2>/dev/null || true
     fi
 }
 
-apply_colors
+# Reload Hyprland first to apply theme.conf (with timeout)
+timeout --kill-after=0.5 2 hyprctl reload 2>/dev/null || true
 
-# Reload Hyprland
-hyprctl reload 2>/dev/null || true
+# Then override with colors from colors.toml (accent for borders)
+# This ensures the accent color is always used for active borders
+sleep 0.2
+apply_colors

@@ -1,0 +1,59 @@
+#!/bin/bash
+# Initialize wallpaper from current theme
+
+CRUZALEX_DIR="${CRUZALEX_DIR:-$HOME/.config/cruzalex}"
+THEME_DIR="$CRUZALEX_DIR/current"
+WALLPAPER_STATE="$CRUZALEX_DIR/.current-wallpaper"
+
+# Get background color from theme for fallback
+get_bg_color() {
+    local colors_file="$THEME_DIR/colors.toml"
+    if [ -f "$colors_file" ]; then
+        grep '^background *=' "$colors_file" | head -1 | cut -d'"' -f2
+    else
+        echo "#193549"
+    fi
+}
+
+# Find a wallpaper from theme
+find_wallpaper() {
+    local bg_dir="$THEME_DIR/backgrounds"
+
+    # Check if backgrounds directory exists and has files
+    if [ -d "$bg_dir" ]; then
+        # Get first image file
+        local wallpaper=$(find "$bg_dir" -type f \( -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -o -name "*.webp" \) 2>/dev/null | sort | head -1)
+        if [ -n "$wallpaper" ]; then
+            echo "$wallpaper"
+            return 0
+        fi
+    fi
+
+    # Check for wallpaper.* in theme root
+    for ext in png jpg jpeg webp; do
+        if [ -f "$THEME_DIR/wallpaper.$ext" ]; then
+            echo "$THEME_DIR/wallpaper.$ext"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# Kill existing swaybg
+pkill swaybg 2>/dev/null
+sleep 0.2
+
+# Try to find and set wallpaper
+wallpaper=$(find_wallpaper)
+
+if [ -n "$wallpaper" ] && [ -f "$wallpaper" ]; then
+    echo "$wallpaper" > "$WALLPAPER_STATE"
+    swaybg -i "$wallpaper" -m fill &
+else
+    # Fallback to solid color
+    bg_color=$(get_bg_color)
+    swaybg -c "$bg_color" &
+fi
+
+disown

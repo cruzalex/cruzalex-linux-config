@@ -8,11 +8,18 @@ CRUZALEX_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/cruzalex"
 WALLPAPER_DIR="$CRUZALEX_DIR/wallpapers"
 STATE_FILE="$CRUZALEX_DIR/.wallpaper-index"
 
-# Get current theme
-CURRENT_THEME_LINK="$CRUZALEX_DIR/themes/current"
+# Get current theme (symlink is at $CRUZALEX_DIR/current)
+CURRENT_THEME_LINK="$CRUZALEX_DIR/current"
 if [[ -L "$CURRENT_THEME_LINK" ]]; then
     THEME_DIR=$(readlink -f "$CURRENT_THEME_LINK")
-    THEME_WALLPAPERS="$THEME_DIR/wallpapers"
+    # Check both 'backgrounds' (Omarchy standard) and 'wallpapers' directories
+    if [[ -d "$THEME_DIR/backgrounds" ]]; then
+        THEME_WALLPAPERS="$THEME_DIR/backgrounds"
+    elif [[ -d "$THEME_DIR/wallpapers" ]]; then
+        THEME_WALLPAPERS="$THEME_DIR/wallpapers"
+    else
+        THEME_WALLPAPERS=""
+    fi
 else
     THEME_WALLPAPERS=""
 fi

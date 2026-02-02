@@ -1,0 +1,9 @@
+# cruzAlex Flatpak Package List
+# Apps that work better as Flatpaks or aren't in distro repos
+
+# Spotify TUI client (alternative to spotify_player)
+io.github.hrkfdn.ncspot
+
+# Optional: Add more Flatpak apps below
+# com.spotify.Client
+# com.discordapp.Discord

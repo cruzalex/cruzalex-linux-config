@@ -68,4 +68,21 @@ if [ -n "$FAILED" ]; then
     echo "You can try installing them manually later with: cargo install <package>"
 fi
 
+# Build cruzalex-themes TUI
+echo ""
+echo "=== Building cruzalex-themes TUI ==="
+THEMES_DIR="$REPO_DIR/tools/cruzalex-themes"
+if [ -d "$THEMES_DIR" ] && [ -f "$THEMES_DIR/Cargo.toml" ]; then
+    echo "  Building cruzalex-themes..."
+    if (cd "$THEMES_DIR" && cargo build --release); then
+        mkdir -p "$HOME/.local/bin"
+        cp "$THEMES_DIR/target/release/cruzalex-themes" "$HOME/.local/bin/"
+        echo "  ✓ cruzalex-themes installed to ~/.local/bin"
+    else
+        echo "  ✗ cruzalex-themes build failed"
+    fi
+else
+    echo "  cruzalex-themes source not found, skipping"
+fi
+
 echo "=== Cargo applications installation complete ==="

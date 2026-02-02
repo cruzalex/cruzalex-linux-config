@@ -20,10 +20,10 @@ max-icon-size=48
 icon-location=left
 
 # Colors (updated by theme hooks)
-background-color=#122738ee
-text-color=#ffffff
-border-color=#ffc600
-progress-color=over #ffc60066
+background-color=#0f0f0fee
+text-color=#eadccc
+border-color=#e2be8a
+progress-color=over #e2be8a66
 
 # Behavior
 default-timeout=5000
@@ -43,42 +43,42 @@ format=<b>%s</b>\n%b
 
 # Urgency levels
 [urgency=low]
-border-color=#555555
+border-color=#e2be8a
 default-timeout=3000
 
 [urgency=normal]
-border-color=#ffc600
+border-color=#e2be8a
 default-timeout=5000
 
 [urgency=critical]
-border-color=#ff0000
+border-color=#e2be8a
 default-timeout=0
 ignore-timeout=1
 
 # App-specific rules
 [app-name=Spotify]
-border-color=#1db954
+border-color=#e2be8a
 default-timeout=3000
 
 [app-name=discord]
-border-color=#5865f2
+border-color=#e2be8a
 
 [app-name=Firefox]
-border-color=#ff7139
+border-color=#e2be8a
 
 [app-name=Chromium]
-border-color=#4285f4
+border-color=#e2be8a
 
 [app-name=Volume]
-border-color=#6ae3fa
+border-color=#e2be8a
 default-timeout=1500
 
 [app-name=Brightness]
-border-color=#ffe50a
+border-color=#e2be8a
 default-timeout=1500
 
 [app-name=Screenshot]
-border-color=#38de21
+border-color=#e2be8a
 default-timeout=3000
 
 # Hidden/private notifications

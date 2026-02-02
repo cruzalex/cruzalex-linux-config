@@ -58,6 +58,16 @@ kitty
 # ═══════════════════════════════════════════════════════════════
 jetbrains-mono-fonts
 google-noto-color-emoji-fonts
+fontawesome-fonts
+
+# ═══════════════════════════════════════════════════════════════
+# NOTE: JetBrainsMono Nerd Font (required for TUI icons)
+# Fedora doesn't have Nerd Fonts in repos. Install manually:
+#   mkdir -p ~/.local/share/fonts
+#   curl -fLo /tmp/JetBrainsMono.zip https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.zip
+#   unzip /tmp/JetBrainsMono.zip -d ~/.local/share/fonts/JetBrainsMono
+#   fc-cache -fv
+# ═══════════════════════════════════════════════════════════════
 
 # ═══════════════════════════════════════════════════════════════
 # Build Dependencies (for cargo apps)
@@ -91,6 +101,11 @@ bluez-tools
 # Browsers
 # ═══════════════════════════════════════════════════════════════
 chromium
+
+# ═══════════════════════════════════════════════════════════════
+# Terminal Multiplexer
+# ═══════════════════════════════════════════════════════════════
+tmux
 
 # ═══════════════════════════════════════════════════════════════
 # Git TUI

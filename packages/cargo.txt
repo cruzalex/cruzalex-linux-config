@@ -21,6 +21,11 @@ procs
 # HTTP client
 xh
 
+# Spotify TUI player (requires: openssl-devel alsa-lib-devel dbus-devel)
+# Note: After install, create Spotify app at developer.spotify.com/dashboard
+# and add client_id to ~/.config/spotify-player/app.toml
+spotify_player
+
 # ═══════════════════════════════════════════════════════════════
 # The following are commented out - install from repos instead:
 # ═══════════════════════════════════════════════════════════════
@@ -29,5 +34,6 @@ xh
 # gitui              - Install: sudo dnf install gitui (if available) or build from source
 # lazydocker         - Install: go install github.com/jesseduffield/lazydocker@latest
 # spotify_player     - Install: needs librespot-devel, build manually
+# ncspot             - Install: cargo install ncspot (needs librespot-devel)
 # dust               - Install: sudo dnf install dust (if available)
 # satty              - Install: sudo dnf install satty (if available)
