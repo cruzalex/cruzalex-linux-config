@@ -1,0 +1,3 @@
+#!/bin/bash
+# ncspot wrapper - runs flatpak version
+exec flatpak run io.github.hrkfdn.ncspot "$@"

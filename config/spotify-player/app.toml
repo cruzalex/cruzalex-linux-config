@@ -1,6 +1,11 @@
 # cruzAlex Spotify Player Configuration
 # TUI Spotify client
 
+# IMPORTANT: Create your own Spotify app at https://developer.spotify.com/dashboard
+# Set Redirect URI to: http://127.0.0.1:8989/login
+# Then paste your Client ID below:
+client_id = "e23b09f8f0ce462c9641268bab261fd9"
+
 [device]
 name = "cruzalex-spotify"
 device_type = "computer"
@@ -11,13 +16,14 @@ normalization = false
 
 [playback]
 # Available backends: rodio, pulseaudio, alsa
-backend = "pulseaudio"
+# rodio works better with PipeWire on Fedora
+backend = "rodio"
 # Gapless playback
 gapless = true
 
 [interface]
-# Theme is set by theme hooks
-theme = "default"
+# Theme is set by theme hooks (cruzalex theme generated from colors.toml)
+theme = "cruzalex"
 
 # Show playback window borders
 playback_window_position = "Top"

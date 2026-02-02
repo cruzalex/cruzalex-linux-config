@@ -1,0 +1,1 @@
+/home/cruzalex/.config/cruzalex/themes/cobalt2/neovim.lua

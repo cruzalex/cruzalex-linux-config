@@ -9,9 +9,10 @@ use ratatui::{
     widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Wrap},
     Frame,
 };
+use ratatui_image::StatefulImage;
 
 /// Main draw function
-pub fn draw(f: &mut Frame, app: &App) {
+pub fn draw(f: &mut Frame, app: &mut App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -31,15 +32,16 @@ pub fn draw(f: &mut Frame, app: &App) {
     }
 }
 
-/// Draw header with title and filter
+/// Draw header with title, filter and sort
 fn draw_header(f: &mut Frame, app: &App, area: Rect) {
     let title = format!(
-        " cruzAlex Themes │ {} themes │ Filter: {} ",
+        " cruzAlex Themes | {} themes | Filter: {} | Sort: {} ",
         app.filtered_themes.len(),
-        app.filter_mode.label()
+        app.filter_mode.label(),
+        app.sort_mode.label()
     );
 
-    let loading = if app.loading { " ⟳ Loading..." } else { "" };
+    let loading = if app.loading { " [Loading...]" } else { "" };
 
     let header = Paragraph::new(Line::from(vec![
         Span::styled(title, Style::default().fg(Color::Cyan)),
@@ -55,7 +57,7 @@ fn draw_header(f: &mut Frame, app: &App, area: Rect) {
 }
 
 /// Draw main content area
-fn draw_main(f: &mut Frame, app: &App, area: Rect) {
+fn draw_main(f: &mut Frame, app: &mut App, area: Rect) {
     if app.show_preview {
         // Split into list and preview
         let chunks = Layout::default()
@@ -70,75 +72,97 @@ fn draw_main(f: &mut Frame, app: &App, area: Rect) {
     }
 }
 
-/// Draw theme list
-fn draw_theme_list(f: &mut Frame, app: &App, area: Rect) {
-    let items: Vec<ListItem> = app
+/// Draw theme list with scrolling support
+fn draw_theme_list(f: &mut Frame, app: &mut App, area: Rect) {
+    // Pre-collect theme data to avoid borrow issues
+    let theme_data: Vec<_> = app
         .filtered_themes
         .iter()
-        .enumerate()
-        .map(|(i, &theme_idx)| {
+        .map(|&theme_idx| {
             let theme = &app.themes[theme_idx];
-            let is_selected = i == app.selected;
+            (
+                theme.name.clone(),
+                theme.display_name.clone(),
+                theme.status.clone(),
+                theme.is_light,
+                theme.background_count,
+                app.favorites.contains(&theme.name),
+                theme.stars,
+            )
+        })
+        .collect();
 
-            let status_color = match theme.status {
-                ThemeStatus::Active => Color::Green,
-                ThemeStatus::Installed => Color::Blue,
-                ThemeStatus::Available => Color::DarkGray,
-            };
-
-            let style = if is_selected {
-                Style::default()
-                    .fg(Color::Yellow)
-                    .add_modifier(Modifier::BOLD)
+    let items: Vec<ListItem> = theme_data
+        .iter()
+        .map(|(_, display_name, status, is_light, bg_count, is_fav, stars)| {
+            // Favorite star
+            let fav_icon = if *is_fav {
+                Span::styled("★ ", Style::default().fg(Color::Magenta))
             } else {
-                Style::default().fg(Color::White)
+                Span::raw("  ")
             };
 
-            let line = Line::from(vec![
-                Span::styled(format!("{} ", theme.status.symbol()), Style::default().fg(status_color)),
-                Span::styled(&theme.display_name, style),
-                if theme.is_light {
-                    Span::styled(" ☀", Style::default().fg(Color::Yellow))
-                } else {
-                    Span::raw("")
-                },
-                if theme.background_count > 0 {
-                    Span::styled(
-                        format!(" ({} bg)", theme.background_count),
-                        Style::default().fg(Color::DarkGray),
-                    )
-                } else {
-                    Span::raw("")
-                },
-                if let Some(stars) = theme.stars {
-                    Span::styled(format!(" ★{}", stars), Style::default().fg(Color::Yellow))
-                } else {
-                    Span::raw("")
-                },
-            ]);
+            let status_icon = match status {
+                ThemeStatus::Active => Span::styled("● ", Style::default().fg(Color::Green)),
+                ThemeStatus::Installed => Span::styled("○ ", Style::default().fg(Color::Blue)),
+                ThemeStatus::Available => Span::styled("◌ ", Style::default().fg(Color::DarkGray)),
+            };
 
-            ListItem::new(line)
+            let name = Span::styled(
+                display_name.as_str(),
+                Style::default().fg(Color::White),
+            );
+
+            let light_icon = if *is_light {
+                Span::styled(" [light]", Style::default().fg(Color::Yellow))
+            } else {
+                Span::raw("")
+            };
+
+            let bg_count_span = if *bg_count > 0 {
+                Span::styled(
+                    format!(" ({} bg)", bg_count),
+                    Style::default().fg(Color::DarkGray),
+                )
+            } else {
+                Span::raw("")
+            };
+
+            // GitHub stars
+            let stars_span = if let Some(s) = stars {
+                Span::styled(
+                    format!(" ⭐{}", s),
+                    Style::default().fg(Color::Yellow),
+                )
+            } else {
+                Span::raw("")
+            };
+
+            ListItem::new(Line::from(vec![fav_icon, status_icon, name, light_icon, bg_count_span, stars_span]))
         })
         .collect();
 
     let list = List::new(items)
         .block(
             Block::default()
-                .title(" Themes ")
+                .title(" Themes (j/k to navigate, Enter to apply) ")
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::Blue)),
         )
         .highlight_style(
             Style::default()
                 .bg(Color::DarkGray)
+                .fg(Color::Yellow)
                 .add_modifier(Modifier::BOLD),
-        );
+        )
+        .highlight_symbol("> ");
 
-    f.render_widget(list, area);
+    // Use stateful widget for scrolling
+    f.render_stateful_widget(list, area, &mut app.list_state);
 }
 
 /// Draw theme preview
-fn draw_preview(f: &mut Frame, app: &App, area: Rect) {
+fn draw_preview(f: &mut Frame, app: &mut App, area: Rect) {
     let block = Block::default()
         .title(" Preview ")
         .borders(Borders::ALL)
@@ -147,15 +171,30 @@ fn draw_preview(f: &mut Frame, app: &App, area: Rect) {
     let inner = block.inner(area);
     f.render_widget(block, area);
 
-    if let Some(theme) = app.selected_theme() {
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(3),  // Name
-                Constraint::Min(5),     // Color palette
-                Constraint::Length(5),  // Info
-            ])
-            .split(inner);
+    if let Some(theme) = app.selected_theme().cloned() {
+        // Calculate layout based on whether we have an image or could have one (remote URL)
+        let has_preview = theme.preview_path.is_some() || theme.preview_url.is_some() || app.image_loading;
+
+        let chunks = if has_preview {
+            Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Length(2),  // Name
+                    Constraint::Length(6),  // Color palette
+                    Constraint::Min(8),     // Image preview area
+                    Constraint::Length(4),  // Info
+                ])
+                .split(inner)
+        } else {
+            Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Length(2),  // Name
+                    Constraint::Min(6),     // Color palette
+                    Constraint::Length(5),  // Info
+                ])
+                .split(inner)
+        };
 
         // Theme name
         let name = Paragraph::new(theme.display_name.clone())
@@ -173,7 +212,60 @@ fn draw_preview(f: &mut Frame, app: &App, area: Rect) {
             f.render_widget(no_colors, chunks[1]);
         }
 
+        // Image preview area
+        if has_preview {
+            let preview_area = chunks[2];
+
+            // Try to render actual image if loaded
+            if let Some(protocol) = &mut app.current_preview_image {
+                let image = StatefulImage::new(None);
+                f.render_stateful_widget(image, preview_area, protocol);
+            } else if app.image_loading {
+                // Show loading indicator
+                let loading = Paragraph::new(vec![
+                    Line::from(""),
+                    Line::from(Span::styled(
+                        "Loading preview...",
+                        Style::default().fg(Color::Yellow),
+                    )),
+                ])
+                .alignment(Alignment::Center)
+                .block(Block::default().borders(Borders::ALL).border_style(Style::default().fg(Color::DarkGray)));
+                f.render_widget(loading, preview_area);
+            } else if theme.preview_path.is_some() || theme.preview_url.is_some() {
+                // Fallback: show message that preview is being fetched or couldn't be loaded
+                let msg = if theme.preview_url.is_some() && theme.preview_path.is_none() {
+                    "Fetching preview..."
+                } else {
+                    "Preview unavailable"
+                };
+                let preview_text = Paragraph::new(vec![
+                    Line::from(""),
+                    Line::from(Span::styled(
+                        msg,
+                        Style::default().fg(Color::DarkGray),
+                    )),
+                ])
+                .alignment(Alignment::Center)
+                .block(Block::default().borders(Borders::ALL).border_style(Style::default().fg(Color::DarkGray)));
+                f.render_widget(preview_text, preview_area);
+            } else {
+                // No preview available at all
+                let preview_text = Paragraph::new(vec![
+                    Line::from(""),
+                    Line::from(Span::styled(
+                        "No preview available",
+                        Style::default().fg(Color::DarkGray),
+                    )),
+                ])
+                .alignment(Alignment::Center)
+                .block(Block::default().borders(Borders::ALL).border_style(Style::default().fg(Color::DarkGray)));
+                f.render_widget(preview_text, preview_area);
+            }
+        }
+
         // Theme info
+        let info_chunk = if has_preview { chunks[3] } else { chunks[2] };
         let mut info_lines = vec![
             Line::from(vec![
                 Span::styled("Status: ", Style::default().fg(Color::DarkGray)),
@@ -206,7 +298,12 @@ fn draw_preview(f: &mut Frame, app: &App, area: Rect) {
         }
 
         let info = Paragraph::new(info_lines).wrap(Wrap { trim: true });
-        f.render_widget(info, chunks[2]);
+        f.render_widget(info, info_chunk);
+    } else {
+        let empty = Paragraph::new("No theme selected")
+            .style(Style::default().fg(Color::DarkGray))
+            .alignment(Alignment::Center);
+        f.render_widget(empty, inner);
     }
 }
 
@@ -215,7 +312,7 @@ fn draw_color_palette(f: &mut Frame, colors: &crate::theme::ColorPalette, area: 
     let all_colors = [
         ("bg", &colors.background),
         ("fg", &colors.foreground),
-        ("acc", &colors.accent),
+        ("ac", &colors.accent),
         ("0", &colors.color0),
         ("1", &colors.color1),
         ("2", &colors.color2),
@@ -236,23 +333,55 @@ fn draw_color_palette(f: &mut Frame, colors: &crate::theme::ColorPalette, area: 
 
     let mut lines = Vec::new();
 
-    for chunk in all_colors.chunks(6) {
-        let spans: Vec<Span> = chunk
-            .iter()
-            .filter_map(|(label, color)| {
-                color.as_ref().map(|c| {
-                    let rgb = parse_hex_color(c);
-                    Span::styled(
-                        format!(" {} ", label),
-                        Style::default().bg(rgb).fg(contrast_color(rgb)),
-                    )
-                })
+    // First row: bg, fg, accent
+    let first_row: Vec<Span> = all_colors[0..3]
+        .iter()
+        .filter_map(|(label, color)| {
+            color.as_ref().map(|c| {
+                let rgb = parse_hex_color(c);
+                Span::styled(
+                    format!(" {} ", label),
+                    Style::default().bg(rgb).fg(contrast_color(rgb)),
+                )
             })
-            .collect();
+        })
+        .collect();
+    if !first_row.is_empty() {
+        lines.push(Line::from(first_row));
+    }
 
-        if !spans.is_empty() {
-            lines.push(Line::from(spans));
-        }
+    // Colors 0-7 in one row
+    let row_0_7: Vec<Span> = all_colors[3..11]
+        .iter()
+        .filter_map(|(label, color)| {
+            color.as_ref().map(|c| {
+                let rgb = parse_hex_color(c);
+                Span::styled(
+                    format!("{}", label),
+                    Style::default().bg(rgb).fg(contrast_color(rgb)),
+                )
+            })
+        })
+        .collect();
+    if !row_0_7.is_empty() {
+        lines.push(Line::from(row_0_7));
+    }
+
+    // Colors 8-15 in another row
+    let row_8_15: Vec<Span> = all_colors[11..19]
+        .iter()
+        .filter_map(|(label, color)| {
+            color.as_ref().map(|c| {
+                let rgb = parse_hex_color(c);
+                Span::styled(
+                    format!("{}", label),
+                    Style::default().bg(rgb).fg(contrast_color(rgb)),
+                )
+            })
+        })
+        .collect();
+    if !row_8_15.is_empty() {
+        lines.push(Line::from(row_8_15));
     }
 
     let palette = Paragraph::new(lines).alignment(Alignment::Center);
@@ -262,7 +391,7 @@ fn draw_color_palette(f: &mut Frame, colors: &crate::theme::ColorPalette, area: 
 /// Parse hex color to RGB
 fn parse_hex_color(hex: &str) -> Color {
     let hex = hex.trim_start_matches('#');
-    if hex.len() == 6 {
+    if hex.len() >= 6 {
         if let (Ok(r), Ok(g), Ok(b)) = (
             u8::from_str_radix(&hex[0..2], 16),
             u8::from_str_radix(&hex[2..4], 16),
@@ -290,13 +419,13 @@ fn contrast_color(bg: Color) -> Color {
 
 /// Draw footer with keybindings and status
 fn draw_footer(f: &mut Frame, app: &App, area: Rect) {
-    let keybindings = " [↑/k] Up  [↓/j] Down  [Enter] Apply  [i] Install  [d] Delete  [/] Search  [Tab] Filter  [p] Preview  [r] Refresh  [q] Quit ";
+    let keybindings = "[j/k] Nav [Enter] Apply [i] Install [f] Fav [Tab] Filter [s] Sort [/] Search [q] Quit";
 
     let status = app.status_message.as_deref().unwrap_or("");
 
     let footer = Paragraph::new(Line::from(vec![
         Span::styled(keybindings, Style::default().fg(Color::DarkGray)),
-        Span::styled(" │ ", Style::default().fg(Color::DarkGray)),
+        Span::styled(" | ", Style::default().fg(Color::DarkGray)),
         Span::styled(status, Style::default().fg(Color::Yellow)),
     ]))
     .block(
@@ -310,15 +439,15 @@ fn draw_footer(f: &mut Frame, app: &App, area: Rect) {
 
 /// Draw search overlay
 fn draw_search_overlay(f: &mut Frame, app: &App) {
-    let area = centered_rect(50, 3, f.area());
+    let area = centered_rect(60, 3, f.area());
 
     f.render_widget(Clear, area);
 
-    let search = Paragraph::new(format!("Search: {}_", app.search_query))
+    let search = Paragraph::new(format!("Search: {}|", app.search_query))
         .style(Style::default().fg(Color::White))
         .block(
             Block::default()
-                .title(" Search ")
+                .title(" Search (Enter to confirm, Esc to cancel) ")
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::Yellow)),
         );
@@ -331,7 +460,7 @@ fn centered_rect(percent_x: u16, height: u16, r: Rect) -> Rect {
     let popup_layout = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length((r.height - height) / 2),
+            Constraint::Length((r.height.saturating_sub(height)) / 2),
             Constraint::Length(height),
             Constraint::Min(0),
         ])

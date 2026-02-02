@@ -1,8 +1,11 @@
 #!/bin/bash
 # cruzalex-theme-set - Apply a theme across all applications
 # Usage: cruzalex-theme-set <theme-name>
-
-set -e
+#
+# Follows Omarchy patterns:
+# - Atomic symlink updates
+# - Parallel hook execution (fire-and-forget)
+# - No blocking on IPC operations
 
 CRUZALEX_DIR="${CRUZALEX_DIR:-$HOME/.config/cruzalex}"
 THEMES_DIR="$CRUZALEX_DIR/themes"
@@ -48,7 +51,6 @@ fi
 # Parse colors.toml and export as environment variables
 parse_colors() {
     if [ ! -f "$COLORS_FILE" ]; then
-        echo -e "${YELLOW}Warning: No colors.toml found in theme, using defaults${NC}"
         return
     fi
 
@@ -71,12 +73,12 @@ parse_colors() {
 
 echo -e "${GREEN}Applying theme: $THEME_NAME${NC}"
 
-# Export theme info
+# Export theme info for hooks
 export THEME_NAME
 export THEME_DIR
 export CRUZALEX_DIR
 
-# Parse colors
+# Parse colors and export
 parse_colors
 
 # Update the 'current' symlink atomically
@@ -86,18 +88,26 @@ NEW_LINK="$CRUZALEX_DIR/.current.new"
 ln -sfn "$THEME_DIR" "$NEW_LINK"
 mv -T "$NEW_LINK" "$CURRENT_LINK" 2>/dev/null || mv "$NEW_LINK" "$CURRENT_LINK"
 
-echo "  Theme directory: $THEME_DIR"
+# Write current theme name to file (for apps that watch it)
+echo "$THEME_NAME" > "$CRUZALEX_DIR/.current-theme"
 
-# Run hook scripts in order
+# Run hook scripts in parallel (fire-and-forget pattern from Omarchy)
+# This prevents any single hook from blocking the theme switch
 if [ -d "$HOOKS_DIR" ]; then
     echo "  Running hooks..."
     for hook in "$HOOKS_DIR"/*.sh; do
         if [ -x "$hook" ]; then
             hook_name=$(basename "$hook")
             echo -e "    ${YELLOW}→${NC} $hook_name"
-            "$hook" || echo -e "    ${RED}✗${NC} Hook failed: $hook_name"
+            # Run each hook in background with timeout
+            # Redirect all output to avoid blocking on stdout/stderr
+            (
+                timeout --kill-after=1 3 "$hook" >/dev/null 2>&1 || true
+            ) &
         fi
     done
+    # Brief wait for fast hooks, but don't block on slow ones
+    sleep 0.3
 else
     echo -e "${YELLOW}  No hooks directory found${NC}"
 fi
