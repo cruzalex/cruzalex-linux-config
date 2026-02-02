@@ -2,9 +2,17 @@
 # Primary terminal for the TUI-first experience
 
 # ═══════════════════════════════════════════════════════════════
+# Theme (loaded from cruzalex theme system)
+# ═══════════════════════════════════════════════════════════════
+config-file = theme
+
+# ═══════════════════════════════════════════════════════════════
 # Font
 # ═══════════════════════════════════════════════════════════════
+# Primary: JetBrainsMono Nerd Font (has icons for TUIs)
+# Fallback: JetBrains Mono (standard, no icons)
 font-family = "JetBrainsMono Nerd Font"
+font-family = "JetBrains Mono"
 font-size = 14
 font-thicken = true
 
@@ -15,8 +23,8 @@ window-padding-x = 12
 window-padding-y = 8
 window-decoration = false
 gtk-titlebar = false
-background-opacity = 0.95
-unfocused-split-opacity = 0.9
+background-opacity = 0.78
+unfocused-split-opacity = 0.75
 window-theme = ghostty
 
 # ═══════════════════════════════════════════════════════════════
@@ -49,8 +57,8 @@ scrollback-limit = 50000
 # ═══════════════════════════════════════════════════════════════
 # Bell
 # ═══════════════════════════════════════════════════════════════
-visual-bell = true
-audible-bell = false
+# Note: bell-on-urgent is the correct setting in newer Ghostty versions
+# visual-bell and audible-bell were deprecated
 
 # ═══════════════════════════════════════════════════════════════
 # Keybindings (Omarchy-style)
