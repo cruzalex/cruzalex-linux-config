@@ -41,8 +41,8 @@ play = [
 
 [open]
 rules = [
-    # Folders
-    { name = "*/", use = ["edit", "open", "reveal"] },
+    # Folders (yazi 26.5+: must use mime, not name = "*/")
+    { mime = "inode/directory", use = ["edit", "open", "reveal"] },
 
     # Text files
     { mime = "text/*", use = ["edit", "reveal"] },
@@ -69,7 +69,7 @@ rules = [
     { mime = "application/pdf", use = ["open", "reveal"] },
 
     # Fallback
-    { name = "*", use = ["open", "reveal"] }
+    { mime = "*", use = ["open", "reveal"] }
 ]
 
 [tasks]

@@ -186,26 +186,63 @@ impl Theme {
     }
 }
 
-/// Convert GitHub clone URL to raw preview image URL
-/// e.g., https://github.com/user/repo.git -> https://raw.githubusercontent.com/user/repo/main/preview.png
+/// Convert GitHub clone URL to a list of candidate raw preview image URLs.
+///
+/// Theme repos use wildly different conventions: `preview.png`, `preview.jpg`,
+/// `preview-1.png` (akane), `theme.png` (dracula), `screenshot.*`, sometimes
+/// under `assets/` or `images/`. We try a fan-out of common names across main
+/// and master branches; the downloader picks the first one that returns real
+/// image bytes.
 fn github_clone_url_to_preview_url(clone_url: &str) -> Option<String> {
-    // Handle both https://github.com/user/repo and https://github.com/user/repo.git
-    let url = clone_url.trim_end_matches(".git");
+    let urls = preview_candidate_urls(clone_url);
+    urls.into_iter().next()
+}
 
-    if url.contains("github.com") {
-        // Extract owner and repo from URL
-        // https://github.com/owner/repo -> owner/repo
-        let parts: Vec<&str> = url.split("github.com/").collect();
-        if parts.len() == 2 {
-            let path = parts[1];
-            // Try main branch first, then master
-            return Some(format!(
-                "https://raw.githubusercontent.com/{}/main/preview.png",
-                path
+pub fn preview_candidate_urls(github_url: &str) -> Vec<String> {
+    let url = github_url.trim_end_matches(".git").trim_end_matches('/');
+
+    let path = if let Some(idx) = url.find("raw.githubusercontent.com/") {
+        let rest = &url[idx + "raw.githubusercontent.com/".len()..];
+        let parts: Vec<&str> = rest.splitn(3, '/').collect();
+        if parts.len() < 2 {
+            return vec![];
+        }
+        format!("{}/{}", parts[0], parts[1])
+    } else if let Some(idx) = url.find("github.com/") {
+        let rest = &url[idx + "github.com/".len()..];
+        let parts: Vec<&str> = rest.splitn(3, '/').collect();
+        if parts.len() < 2 {
+            return vec![];
+        }
+        format!("{}/{}", parts[0], parts[1])
+    } else {
+        return vec![];
+    };
+
+    const FILENAMES: &[&str] = &[
+        "preview.png", "preview.jpg", "preview.jpeg", "preview.webp",
+        "preview-1.png", "preview-1.jpg", "preview-1.webp",
+        "theme.png", "theme.jpg",
+        "screenshot.png", "screenshot.jpg", "screenshot.webp",
+        "Preview.png", "Screenshot.png",
+        "assets/preview.png", "assets/preview.jpg",
+        "assets/screenshot.png",
+        "images/preview.png", "images/preview.jpg",
+        "images/screenshot.png",
+        ".github/preview.png", "docs/preview.png",
+    ];
+    const BRANCHES: &[&str] = &["main", "master"];
+
+    let mut urls = Vec::with_capacity(FILENAMES.len() * BRANCHES.len());
+    for branch in BRANCHES {
+        for fname in FILENAMES {
+            urls.push(format!(
+                "https://raw.githubusercontent.com/{}/{}/{}",
+                path, branch, fname
             ));
         }
     }
-    None
+    urls
 }
 
 /// GitHub repository data (for fallback API search)
@@ -247,10 +284,49 @@ fn format_theme_name(name: &str) -> String {
 
 /// Find preview image in theme directory
 fn find_preview_image(path: &PathBuf) -> Option<PathBuf> {
-    for name in ["preview.png", "preview.jpg", "preview.jpeg", "screenshot.png"] {
+    const NAMES: &[&str] = &[
+        "preview.png", "preview.jpg", "preview.jpeg", "preview.webp",
+        "theme.png", "theme.jpg",
+        "screenshot.png", "screenshot.jpg", "screenshot.webp",
+        "preview-1.png", "preview-1.jpg", "preview-1.webp",
+        "Preview.png", "Screenshot.png",
+    ];
+    for name in NAMES {
         let preview = path.join(name);
         if preview.exists() {
             return Some(preview);
+        }
+    }
+    for subdir in ["assets", "images", ".github", "docs"] {
+        for name in ["preview.png", "preview.jpg", "screenshot.png", "screenshot.jpg"] {
+            let preview = path.join(subdir).join(name);
+            if preview.exists() {
+                return Some(preview);
+            }
+        }
+    }
+    // Last resort: first image in backgrounds/ — themes that only ship wallpapers
+    // (rather than a curated preview shot) still get a sensible thumbnail.
+    let bg_dir = path.join("backgrounds");
+    if bg_dir.exists() {
+        if let Ok(entries) = std::fs::read_dir(&bg_dir) {
+            let mut images: Vec<PathBuf> = entries
+                .filter_map(|e| e.ok())
+                .map(|e| e.path())
+                .filter(|p| {
+                    p.extension()
+                        .and_then(|x| x.to_str())
+                        .map(|ext| {
+                            let e = ext.to_lowercase();
+                            e == "png" || e == "jpg" || e == "jpeg" || e == "webp"
+                        })
+                        .unwrap_or(false)
+                })
+                .collect();
+            images.sort();
+            if let Some(first) = images.into_iter().next() {
+                return Some(first);
+            }
         }
     }
     None

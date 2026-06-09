@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# cruzalex-layout-media — restore the 3-pane media layout:
+#   ┌──────────────┬──────────┐
+#   │   cava       │          │
+#   ├──────────────┤  spotify │
+#   │   shell      │          │
+#   └──────────────┴──────────┘
+#
+# Usage: cruzalex-layout-media [workspace_number]
+# Default workspace: 9.  Bound to SUPER+ALT+M in bindings.conf.
+
+set -euo pipefail
+
+WS="${1:-9}"
+SLEEP=0.45
+
+# Refuse to re-stack if a media-* window already exists (cheap idempotency).
+if hyprctl -j clients | grep -q '"class": *"media-'; then
+    notify-send "media-layout" "Already running — focusing workspace $WS"
+    hyprctl dispatch workspace "$WS"
+    exit 0
+fi
+
+hyprctl dispatch workspace "$WS"
+sleep 0.1
+
+# 1. Spotify on the right — spawn first so it ends up filling the workspace,
+#    then later splits move it to one side. Dwindle splits along the longer
+#    axis, so on a 16:9 monitor the next window lands on the right half.
+hyprctl dispatch exec "kitty --class media-spotify -e spotify_player"
+sleep "$SLEEP"
+
+# 2. Cava on the left — splits spotify; the new window inherits focus.
+hyprctl dispatch exec "kitty --class media-cava -e cava"
+sleep "$SLEEP"
+
+# Cava ended up on the right; swap so cava is on the LEFT, spotify on RIGHT.
+hyprctl dispatch swapwindow l 2>/dev/null || true
+
+# 3. Shell below cava — focus cava, force vertical split, spawn shell.
+hyprctl dispatch focuswindow class:media-cava
+hyprctl dispatch togglesplit
+sleep 0.1
+hyprctl dispatch exec "kitty --class media-shell"
+sleep "$SLEEP"
+
+# Optional cleanup: shrink the shell pane so cava gets ~70% of the left column.
+hyprctl dispatch focuswindow class:media-shell
+hyprctl dispatch resizeactive 0 -120
+hyprctl dispatch focuswindow class:media-cava

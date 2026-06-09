@@ -4,7 +4,7 @@
 # ============================================================================
 # PATH
 # ============================================================================
-export PATH="$HOME/.config/cruzalex/bin:$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
+export PATH="$HOME/.config/cruzalex/bin:$HOME/.cargo/bin:$HOME/.local/bin:$PATH:$HOME/go/bin"
 
 # ============================================================================
 # ENVIRONMENT
@@ -213,12 +213,6 @@ extract() {
 # INTEGRATIONS
 # ============================================================================
 
-# Zoxide (smart cd)
-if command -v zoxide &> /dev/null; then
-    eval "$(zoxide init zsh)"
-    alias cd='z'
-fi
-
 # FZF
 if command -v fzf &> /dev/null; then
     # FZF options
@@ -243,7 +237,20 @@ if command -v starship &> /dev/null; then
     eval "$(starship init zsh)"
 fi
 
+# Zoxide (smart cd) - must be initialized at the end of .zshrc
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init zsh)"
+    alias cd='z'
+fi
+
 # ============================================================================
 # LOCAL OVERRIDES
 # ============================================================================
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
+
+# Added by Antigravity CLI installer
+export PATH="/home/cruzalex/.local/bin:$PATH"
+
+# opencode
+export PATH=/home/cruzalex/.opencode/bin:$PATH

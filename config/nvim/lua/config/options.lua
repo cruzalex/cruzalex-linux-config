@@ -65,8 +65,8 @@ opt.spelllang = { "en" }
 
 -- Fill chars
 opt.fillchars = {
-  foldopen = "",
-  foldclose = "",
+  foldopen = "▾",
+  foldclose = "▸",
   fold = " ",
   foldsep = " ",
   diff = "╱",

@@ -1,1 +1,1 @@
-/home/cruzalex/.config/cruzalex/themes/aamis/neovim.lua
+/home/cruzalex/.config/cruzalex/themes/agentuity/neovim.lua

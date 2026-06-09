@@ -1,6 +1,9 @@
 //! Application state and logic
 
-use crate::theme::{fetch_github_themes, load_local_themes, Theme, ThemeStatus};
+use crate::theme::{
+    fetch_github_api_themes, fetch_github_themes, load_local_themes, preview_candidate_urls,
+    Theme, ThemeStatus,
+};
 use anyhow::{Context, Result};
 use image::ImageReader;
 use ratatui::widgets::ListState;
@@ -114,6 +117,10 @@ pub struct App {
     pub current_preview_path: Option<PathBuf>,
     /// Is an image currently loading?
     pub image_loading: bool,
+    /// Is the About modal open?
+    pub about_open: bool,
+    /// Is the preview zoom modal open?
+    pub zoom_open: bool,
 }
 
 impl App {
@@ -171,6 +178,8 @@ impl App {
             current_preview_image: None,
             current_preview_path: None,
             image_loading: false,
+            about_open: false,
+            zoom_open: false,
         };
 
         app.update_filter();
@@ -403,6 +412,46 @@ impl App {
         self.show_preview = !self.show_preview;
     }
 
+    pub fn toggle_about(&mut self) {
+        self.about_open = !self.about_open;
+        if self.about_open {
+            self.zoom_open = false;
+        }
+    }
+
+    pub fn toggle_zoom(&mut self) {
+        if self.selected_theme().is_some() {
+            self.zoom_open = !self.zoom_open;
+            if self.zoom_open {
+                self.about_open = false;
+            }
+        }
+    }
+
+    pub fn close_modals(&mut self) -> bool {
+        if self.about_open || self.zoom_open {
+            self.about_open = false;
+            self.zoom_open = false;
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn counts(&self) -> (usize, usize, usize, usize) {
+        let mut active = 0;
+        let mut installed = 0;
+        let mut available = 0;
+        for t in &self.themes {
+            match t.status {
+                ThemeStatus::Active => active += 1,
+                ThemeStatus::Installed => installed += 1,
+                ThemeStatus::Available => available += 1,
+            }
+        }
+        (active, installed, available, self.favorites.len())
+    }
+
     /// Apply selected theme
     pub fn apply_theme(&mut self) -> Result<()> {
         if self.loading {
@@ -549,29 +598,58 @@ impl App {
         self.status_message = Some("Fetching themes...".to_string());
         self.loading = true;
 
-        match fetch_github_themes().await {
-            Ok(remote_themes) => {
-                // Keep installed themes, add new remote ones
-                let installed_names: HashSet<String> = self.themes
-                    .iter()
-                    .filter(|t| matches!(t.status, ThemeStatus::Active | ThemeStatus::Installed))
-                    .map(|t| t.name.clone())
-                    .collect();
+        let mut remote_themes = match fetch_github_themes().await {
+            Ok(themes) => themes,
+            Err(e) => {
+                self.status_message = Some(format!("Failed to fetch curated list: {}", e));
+                self.loading = false;
+                return Ok(());
+            }
+        };
 
-                for remote in remote_themes {
-                    if !installed_names.contains(&remote.name) {
-                        self.themes.push(remote);
+        // Live GitHub topic search — best-effort; rate-limit / network failures
+        // must not break the refresh. Dedup against the curated list by URL so
+        // a repo present in both sources keeps the curated entry's slug.
+        let topic_status = match fetch_github_api_themes().await {
+            Ok(api_themes) => {
+                let known: HashSet<String> = remote_themes
+                    .iter()
+                    .filter_map(|t| t.remote_url.as_deref().map(normalize_repo_url))
+                    .collect();
+                let mut added = 0usize;
+                for t in api_themes {
+                    let dup = t
+                        .remote_url
+                        .as_deref()
+                        .map(|u| known.contains(&normalize_repo_url(u)))
+                        .unwrap_or(true);
+                    if !dup {
+                        remote_themes.push(t);
+                        added += 1;
                     }
                 }
-
-                self.themes.sort_by(|a, b| a.name.cmp(&b.name));
-                self.update_filter();
-                self.status_message = Some(format!("Found {} themes", self.themes.len()));
+                format!(" (+{} via topic)", added)
             }
-            Err(e) => {
-                self.status_message = Some(format!("Failed to fetch: {}", e));
+            Err(_) => String::from(" (topic search skipped)"),
+        };
+
+        let installed_names: HashSet<String> = self
+            .themes
+            .iter()
+            .filter(|t| matches!(t.status, ThemeStatus::Active | ThemeStatus::Installed))
+            .map(|t| t.name.clone())
+            .collect();
+
+        for remote in remote_themes {
+            if !installed_names.contains(&remote.name) {
+                self.themes.push(remote);
             }
         }
+
+        self.themes.sort_by(|a, b| a.name.cmp(&b.name));
+        self.update_filter();
+        self.status_message =
+            Some(format!("Found {} themes{}", self.themes.len(), topic_status));
 
         self.loading = false;
         Ok(())
@@ -844,49 +922,68 @@ async fn fetch_repo_stars(client: &reqwest::Client, github_url: &str) -> Result<
     Ok(info.stargazers_count)
 }
 
-/// Download preview image from URL and cache it
-async fn download_preview(url: &str, cache_dir: &PathBuf, theme_name: &str) -> Result<PathBuf, String> {
+/// Download preview image from a list of candidate URLs and cache it.
+///
+/// `seed_url` is any URL that points at the GitHub repo (raw or repo page);
+/// we derive a fan-out of likely preview paths from it and try each. The first
+/// candidate that returns actual image bytes wins. A 200 OK with HTML body
+/// (GitHub Pages 404 fallback) is rejected via magic-byte sniffing so we don't
+/// cache garbage and stop probing.
+async fn download_preview(
+    seed_url: &str,
+    cache_dir: &PathBuf,
+    theme_name: &str,
+) -> Result<PathBuf, String> {
     let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(10))
+        .timeout(std::time::Duration::from_secs(8))
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
-    // Try main branch first, then master
-    let urls = [
-        url.to_string(),
-        url.replace("/main/", "/master/"),
-    ];
-
-    for try_url in &urls {
-        match client.get(try_url).send().await {
-            Ok(response) if response.status().is_success() => {
-                let bytes = response.bytes().await
-                    .map_err(|e| format!("Failed to read response: {}", e))?;
-
-                let cached_path = cache_dir.join(format!("{}.png", theme_name));
-                std::fs::write(&cached_path, &bytes)
-                    .map_err(|e| format!("Failed to write cache file: {}", e))?;
-
-                return Ok(cached_path);
-            }
-            _ => continue,
-        }
+    let candidates = preview_candidate_urls(seed_url);
+    if candidates.is_empty() {
+        return Err("No candidate URLs derivable from seed".to_string());
     }
 
-    Err("Preview not found".to_string())
+    for try_url in &candidates {
+        let response = match client.get(try_url).send().await {
+            Ok(r) if r.status().is_success() => r,
+            _ => continue,
+        };
+        let bytes = match response.bytes().await {
+            Ok(b) => b,
+            Err(_) => continue,
+        };
+        if !looks_like_image(&bytes) {
+            continue;
+        }
+        let cached_path = cache_dir.join(format!("{}.png", theme_name));
+        std::fs::write(&cached_path, &bytes)
+            .map_err(|e| format!("Failed to write cache file: {}", e))?;
+        return Ok(cached_path);
+    }
+
+    Err("No preview image found among candidates".to_string())
+}
+
+fn looks_like_image(bytes: &[u8]) -> bool {
+    bytes.starts_with(b"\x89PNG\r\n\x1a\n")
+        || bytes.starts_with(b"\xff\xd8\xff")
+        || bytes.starts_with(b"GIF8")
+        || (bytes.len() >= 12 && &bytes[0..4] == b"RIFF" && &bytes[8..12] == b"WEBP")
 }
 
 /// Load and prepare a preview image for display
 fn load_preview_image(picker: &mut Picker, path: &PathBuf) -> Result<StatefulProtocol, String> {
-    // Read and decode the image
+    // .with_guessed_format() lets us decode JPEG/WebP/GIF bytes even when the
+    // cached file ends in .png — see download_preview, which always writes the
+    // canonical .png path regardless of source content type.
     let img = ImageReader::open(path)
         .map_err(|e| format!("Failed to open image: {}", e))?
+        .with_guessed_format()
+        .map_err(|e| format!("Failed to guess image format: {}", e))?
         .decode()
         .map_err(|e| format!("Failed to decode image: {}", e))?;
-
-    // Create protocol for the image
     let protocol = picker.new_resize_protocol(img);
-
     Ok(protocol)
 }
 
@@ -905,4 +1002,11 @@ fn save_favorites(config_dir: &PathBuf, favorites: &HashSet<String>) {
     let favorites_file = config_dir.join(".favorites");
     let content: String = favorites.iter().map(|s| s.as_str()).collect::<Vec<_>>().join("\n");
     let _ = std::fs::write(favorites_file, content);
+}
+
+fn normalize_repo_url(url: &str) -> String {
+    url.trim()
+        .trim_end_matches('/')
+        .trim_end_matches(".git")
+        .to_lowercase()
 }

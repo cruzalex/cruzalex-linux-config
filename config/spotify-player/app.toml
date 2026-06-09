@@ -5,6 +5,13 @@
 # Set Redirect URI to: http://127.0.0.1:8989/login
 # Then paste your Client ID below:
 client_id = "e23b09f8f0ce462c9641268bab261fd9"
+theme = "cruzalex"
+
+# Force audio to stream through the local librespot device so the FFT
+# visualizer has real PCM data to draw from. Without this, audio routed via
+# Spotify Connect to another speaker would skip our backend entirely.
+enable_streaming = "Always"
+enable_audio_visualization = true
 
 [device]
 name = "cruzalex-spotify"
@@ -21,28 +28,10 @@ backend = "rodio"
 # Gapless playback
 gapless = true
 
-[interface]
-# Theme is set by theme hooks (cruzalex theme generated from colors.toml)
-theme = "cruzalex"
-
-# Show playback window borders
+[layout]
 playback_window_position = "Top"
-
-# Progress bar character
-progress_bar_character = "─"
-
-# Cover image
-cover_image = true
-cover_image_width = 10
-
-# Show track table headers
-track_table_item_max_len = 32
-
-# Page size for scrolling
-page_size_in_rows = 20
-
-# Enable vim keybindings
-vim_key_enabled = true
+playback_window_height = 12
+library = { playlist_percent = 40, album_percent = 40 }
 
 [keymaps]
 # Movement (vim-style)

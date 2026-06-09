@@ -1,6 +1,10 @@
 # cruzAlex Ghostty Configuration
 # Primary terminal for the TUI-first experience
 
+
+
+
+
 # ═══════════════════════════════════════════════════════════════
 # Theme (loaded from cruzalex theme system)
 # ═══════════════════════════════════════════════════════════════
@@ -9,13 +13,16 @@ config-file = theme
 # ═══════════════════════════════════════════════════════════════
 # Font
 # ═══════════════════════════════════════════════════════════════
-# Primary: JetBrainsMono Nerd Font (has icons for TUIs)
-# Fallback: JetBrains Mono (standard, no icons)
-font-family = "JetBrainsMono Nerd Font"
-font-family = "JetBrains Mono"
-font-size = 14
-font-thicken = true
+# Primary: JetBrainsMono Nerd Font Mono (has powerline + icon glyphs)
+# No fallback to plain "JetBrains Mono" — it has no Nerd glyphs, and
+# Ghostty was pulling bold/italic style variants from it, dropping the
+# powerline triangles.
+font-family = "JetBrainsMono Nerd Font Mono"
+font-size = 16
+font-thicken = false
 
+# Tell Ghostty NOT to follow the system scaling factor
+#window-scaling-factor = 1.0
 # ═══════════════════════════════════════════════════════════════
 # Window
 # ═══════════════════════════════════════════════════════════════
@@ -23,7 +30,7 @@ window-padding-x = 12
 window-padding-y = 8
 window-decoration = false
 gtk-titlebar = false
-background-opacity = 0.78
+background-opacity = 1.0
 unfocused-split-opacity = 0.75
 window-theme = ghostty
 
@@ -115,8 +122,11 @@ keybind = ctrl+shift+f=toggle_fullscreen
 background = #122738
 foreground = #ffffff
 cursor-color = #ffc600
-selection-background = #1f4662
-selection-foreground = #ffffff
+# High-contrast selection — yellow on near-black guarantees legibility
+# regardless of which cruzAlex theme is active (theme files don't override
+# these, only background/foreground/palette).
+selection-background = #fee440
+selection-foreground = #0d0221
 
 # Normal colors
 palette = 0=#000000
@@ -137,3 +147,7 @@ palette = 12=#5555ff
 palette = 13=#ff55ff
 palette = 14=#6ae3fa
 palette = 15=#ffffff
+
+# Renderer choice is no longer a Ghostty config field (removed in 1.3.x).
+# The Hyprland-opacity transparency bug is now handled by forcing GTK's
+# legacy GL renderer via `env = GSK_RENDERER,gl` in hyprland.conf.

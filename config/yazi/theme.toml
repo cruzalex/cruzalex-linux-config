@@ -2,11 +2,11 @@
 # For full theming, add yazi/theme.toml to your theme
 
 [manager]
-cwd = { fg = "#e2be8a" }
+cwd = { fg = "#7eb3d4" }
 
 [status]
 separator_open = ""
 separator_close = ""
 
 [select]
-border = { fg = "#e2be8a" }
+border = { fg = "#7eb3d4" }

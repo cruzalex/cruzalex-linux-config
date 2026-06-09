@@ -106,9 +106,24 @@ async fn run_app<B: ratatui::backend::Backend>(
                     continue;
                 }
 
+                // Modal handling — About and Zoom intercept most keys
+                if app.about_open || app.zoom_open {
+                    match key.code {
+                        KeyCode::Esc
+                        | KeyCode::Char('q')
+                        | KeyCode::Char('?')
+                        | KeyCode::Char('z')
+                        | KeyCode::Enter => {
+                            app.close_modals();
+                        }
+                        _ => {}
+                    }
+                    continue;
+                }
+
                 // Normal mode key handling
                 match (key.modifiers, key.code) {
-                    // Quit - always works
+                    // Quit
                     (_, KeyCode::Char('q')) => return Ok(()),
                     (KeyModifiers::CONTROL, KeyCode::Char('c')) => return Ok(()),
                     (_, KeyCode::Esc) => return Ok(()),
@@ -133,14 +148,14 @@ async fn run_app<B: ratatui::backend::Backend>(
                     // Search
                     (_, KeyCode::Char('/')) => app.enter_search_mode(),
 
-                    // Filter
+                    // Filter / Sort / Preview toggle
                     (_, KeyCode::Tab) => app.cycle_filter(),
-
-                    // Sort
                     (_, KeyCode::Char('s')) => app.cycle_sort(),
-
-                    // Preview toggle
                     (_, KeyCode::Char('p')) => app.toggle_preview(),
+
+                    // Modals
+                    (_, KeyCode::Char('?')) => app.toggle_about(),
+                    (_, KeyCode::Char('z')) => app.toggle_zoom(),
 
                     _ => {}
                 }
