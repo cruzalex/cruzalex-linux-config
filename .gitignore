@@ -36,3 +36,6 @@ Thumbs.db
 # Temporary files
 tmp/
 temp/
+
+# Theme asset clones (managed externally, kept on disk, not vendored)
+cruzalex/themes/
